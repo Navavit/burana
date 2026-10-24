@@ -5,6 +5,7 @@
 ค่าสถิติ (จำนวนสถานี เวลาล่าสุด ช่วงเวลา ขนาดฐานข้อมูล) คำนวณใหม่ทุกรอบจากคลังรายชั่วโมงและ manifest ของฐานข้อมูล
 """
 import json
+import os
 import time
 from pathlib import Path
 
@@ -230,8 +231,11 @@ def _ghcnh_stations(archive):
 
 def _manifest():
     try:
-        from wxdb import store
-        return store.load_manifest(fresh=False)
+        import requests                                 # อ่าน URL สาธารณะตรง ๆ (collect.yml ไม่ได้ติดตั้ง pyarrow)
+        repo = os.environ.get("GITHUB_REPOSITORY", "Navavit/consolidated-weather")
+        r = requests.get(f"https://github.com/{repo}/releases/download/db-catalog/manifest.json", timeout=60)
+        r.raise_for_status()
+        return r.json()
     except Exception as e:                              # noqa: BLE001
         print(f"⚠️ แค็ตตาล็อก manifest: {e}")
         return {"files": []}

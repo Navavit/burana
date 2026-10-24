@@ -45,8 +45,8 @@ def fetch_yesterday():
         agency = ((x.get("agency") or {}).get("agency_shortname") or {}).get("th", "")
         out.append({"id": str(x.get("tele_station_id")), "name": name.strip(), "agency": agency.strip(),
                     "lat": lat, "lon": lon, "stamp": t, "rain": v})
-    df = pd.DataFrame(out)
-    ok = df["stamp"].str.endswith("00:00") & df["rain"].notna() & df["lat"].notna() & df["lon"].notna()
+    df = pd.DataFrame(out, columns=["id", "name", "agency", "lat", "lon", "stamp", "rain"])   # ต้นทางอาจส่งรายการว่าง
+    ok = df["stamp"].astype(str).str.endswith("00:00") & df["rain"].notna() & df["lat"].notna() & df["lon"].notna()
     df = df[ok].copy()
     df["rain"] = df["rain"].astype(float)
     df = df[(df["rain"] >= 0) & (df["rain"] < 1000)]
