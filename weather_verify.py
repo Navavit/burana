@@ -43,14 +43,14 @@ STD_LEADS = [(0, 12), (12, 24), (24, 48), (48, 72), (72, 120), (120, 168), (168,
 HOUR_LEADS = [(lo, hi, f"T+{lo}-{hi}") for lo, hi in STD_LEADS]
 TZ_OFFSET = pd.Timedelta(hours=7)     # เวลาไทย = UTC+7 (ไฟล์พยากรณ์/ค่าวัดเก็บเป็นเวลาไทย)
 SECTIONS = {
-    "tmd3h_rain": {"title": "ฝนราย 3 ชม. · สถานีอุตุนิยมวิทยาใกล้ตำแหน่ง", "variable": "rain", "source": "tmd3h"},
+    "tmd3h_rain": {"title": "ฝนราย 3 ชม. · สถานีอุตุนิยมวิทยา (จุดตรวจทุกจังหวัด)", "variable": "rain", "source": "tmd3h"},
     "thaiwater24h_rain": {"title": "ฝนรายวัน · เครื่องวัดฝนใกล้ตำแหน่ง (ThaiWater)", "variable": "rain", "source": "thaiwater24h"},
     "national_rain": {"title": "ฝนรายวัน · สถานีอุตุนิยมวิทยาทั่วประเทศ", "variable": "rain", "source": "national"},
     "hii24h_rain": {"title": "ฝนรายวัน 19–19 น. · HII WRF-ROMS เทียบแบบจำลองอื่น (เครื่องวัดฝน ThaiWater)",
                     "variable": "rain", "source": "hii24h"},
     "user_rain": {"title": "มีฝน/ไม่มีฝน · รายงานจากผู้ใช้", "variable": "rain", "source": "user"},
     "tw3h_rain": {"title": "ฝนราย 3 ชม. · เครื่องวัดฝนใกล้ตำแหน่ง (ThaiWater รายชั่วโมง)", "variable": "rain", "source": "tw3h"},
-    "tmd3h_temp": {"title": "อุณหภูมิ · สถานีอุตุนิยมวิทยาใกล้ตำแหน่ง", "variable": "temp", "source": "tmd3h"},
+    "tmd3h_temp": {"title": "อุณหภูมิราย 3 ชม. · สถานีอุตุนิยมวิทยา (จุดตรวจทุกจังหวัด)", "variable": "temp", "source": "tmd3h"},
     "national3h_rain": {"title": "ฝนราย 3 ชม. · สถานีอุตุนิยมวิทยาทั่วประเทศ", "variable": "rain", "source": "national3h"},
     "national3h_temp": {"title": "อุณหภูมิราย 3 ชม. · สถานีอุตุนิยมวิทยาทั่วประเทศ", "variable": "temp", "source": "national3h"},
     "national_tmax": {"title": "อุณหภูมิสูงสุดรายวัน · ทั่วประเทศ", "variable": "tmax", "source": "national"},
@@ -113,6 +113,8 @@ def verification_points(archive, locations, tmd3h, thaiwater, cfg=None):
     cfg = cfg or core.CFG
     path = Path(archive) / "verification" / "points.json"
     current = {name for *_, name in locations}
+    nat = national_points(tmd3h)                         # สถานีอุตุนิยมวิทยาทุกแห่ง (จุดตรวจทั่วประเทศ จัดกลุ่มตามจังหวัด)
+    current |= {p["for"] for p in nat}
     # ตำแหน่งที่ถูกลบออกจาก config แล้ว ไม่ต้องเก็บจุดตรวจต่อ (ประวัติคะแนนเดิมยังอยู่ใน pairs)
     pts = {p["key"]: p for p in (json.loads(path.read_text(encoding="utf-8")) if path.exists() else [])
            if p.get("for") in current}
@@ -136,7 +138,7 @@ def verification_points(archive, locations, tmd3h, thaiwater, cfg=None):
            or now - pd.Timestamp(p["last_seen"]) <= pd.Timedelta(days=7)}
     for lat, lon, name in locations:
         s = weather_now.nearest(lat, lon, tmd3h)
-        if s and f"tmd:{s['id']}" not in pts:
+        if s and (f"tmd:{s['id']}" not in pts or pts[f"tmd:{s['id']}"].get("national")):
             pts[f"tmd:{s['id']}"] = {"key": f"tmd:{s['id']}", "kind": "tmd", "id": s["id"], "name": f"สถานี{s['name']}",
                                      "lat": s["lat"], "lon": s["lon"], "for": name, "dist_km": s["dist_km"]}
         # เครื่องวัดฝนหนาแน่น (เช่น กทม.): หลายจุด แต่ละจุดห่างกัน ≥ min_spacing_km
@@ -179,9 +181,72 @@ def verification_points(archive, locations, tmd3h, thaiwater, cfg=None):
                             "dist_km": round(weather_now.distance_km(lat, lon, g["lat"], g["lon"]), 1),
                             "agency": g.get("agency"), "active": True,
                             "last_seen": now.isoformat(timespec="minutes")}
+    for p in nat:                                        # สถานีที่เป็นจุดตรวจของตำแหน่งใน config อยู่แล้ว คงไว้ตามเดิม
+        if p["key"] not in pts or pts[p["key"]].get("national"):
+            pts[p["key"]] = p
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(list(pts.values()), ensure_ascii=False, indent=1), encoding="utf-8")
     return list(pts.values())
+
+
+def national_points(tmd3h):
+    """สถานีอุตุนิยมวิทยาทุกแห่งเป็นจุดตรวจ (for = จังหวัด) · ดึงพยากรณ์แบบเบาทุก NATIONAL_EVERY_H ชม. (collect_national)"""
+    import weather_national
+    prov = weather_national.provinces()
+    names = set(prov.province_th)
+    geo = None
+    out = []
+    for s in tmd3h:
+        if s.get("lat") is None or s.get("lon") is None:
+            continue
+        pv = s.get("province")
+        if pv not in names:
+            if geo is None:
+                geo = json.loads((core.ROOT / "web" / "th_provinces.geojson").read_text(encoding="utf-8"))
+            pv = weather_national._province_of(s["lat"], s["lon"], geo) or pv
+        out.append({"key": f"tmd:{s['id']}", "kind": "tmd", "id": s["id"], "name": f"สถานี{s['name']}",
+                    "lat": s["lat"], "lon": s["lon"], "for": pv, "dist_km": 0.0, "national": True})
+    return out
+
+
+NATIONAL_EVERY_H = 6
+
+
+def collect_national(points, archive, cfg=None, batch=10):
+    """พยากรณ์แบบเบา (อุณหภูมิและฝน ทุกแบบจำลอง) ที่จุดตรวจทั่วประเทศ ทุก NATIONAL_EVERY_H ชม.
+    ≈ 128 จุด × ⌈20 ตัวแปร / 10⌉ ≈ 260 คำขอ/รอบ ≈ 1,000 คำขอ/วัน · เขียนรูปแบบเดียวกับ runs/ ของจุดตรวจอื่น"""
+    import time as _time
+    cfg = cfg or core.CFG
+    stamp = Path(archive) / "verification" / "national_points_last.txt"
+    if stamp.exists() and _time.time() - float(stamp.read_text() or 0) < NATIONAL_EVERY_H * 3600 - 600:
+        return 0
+    pts = [p for p in points if p.get("national")]
+    models = core.active_models(cfg)
+    runs = core.model_runs()
+    n = 0
+    for i in range(0, len(pts), batch):
+        part = pts[i:i + batch]
+        try:
+            r = core.SESSION.get(core.FORECAST_URL, timeout=120, params={
+                "latitude": ",".join(f"{p['lat']:.4f}" for p in part), "longitude": ",".join(f"{p['lon']:.4f}" for p in part),
+                "hourly": "temperature_2m,precipitation", "models": ",".join(models),
+                "forecast_days": core.forecast_days(cfg), "timezone": "Asia/Bangkok"})
+            r.raise_for_status()
+        except Exception as e:
+            print(f"⚠️ จุดตรวจทั่วประเทศ {i}: {e}")
+            continue
+        js = r.json()
+        for p, j in zip(part, js if isinstance(js, list) else [js]):
+            h = j["hourly"]
+            idx = pd.to_datetime(h["time"])
+            data = {var: pd.DataFrame({m["name"]: h.get(f"{var}_{k}") for k, m in models.items()}, index=idx, dtype=float)
+                    .dropna(axis=1, how="all") for var in ("precipitation", "temperature_2m")}
+            store.export_snapshot({"name": p["name"], "lat": p["lat"], "lon": p["lon"], "tz": "Asia/Bangkok",
+                                   "data": data, "ensembles": {}, "runs": runs}, archive, cfg)
+            n += 1
+    stamp.parent.mkdir(parents=True, exist_ok=True)
+    stamp.write_text(str(_time.time()))
+    return n
 
 
 def gauges_density():
@@ -722,9 +787,15 @@ def update(archive, locations, cfg=None, site_dir=None):
         archive_obs(archive, weather_now.fetch_air4thai_all(), "air4thai")
     except Exception as e:
         print(f"⚠️ Air4Thai: {e}")
-    active = [p for p in points if p.get("active", True)]
+    active = [p for p in points if p.get("active", True) and not p.get("national")]
     log = collect_points(active, archive, cfg, google_for=locations[0][2] if locations else None)
     print(log.to_string(index=False))
+    try:
+        nn = collect_national(points, archive, cfg)
+        if nn:
+            print(f"จุดตรวจทั่วประเทศ: พยากรณ์ {nn} สถานี")
+    except Exception as e:
+        print(f"⚠️ จุดตรวจทั่วประเทศ: {e}")
     # HII WRF-ROMS: ภาพออกวันละรอบ (19:00 น.) อ่านค่าครั้งเดียวต่อรอบ ที่ตำแหน่งของผู้ใช้และเครื่องวัดฝน
     hii_pts = [tuple(l) for l in locations] + [(p["lat"], p["lon"], p["name"]) for p in points if p["kind"] == "tw" and p.get("active", True)]
     try:

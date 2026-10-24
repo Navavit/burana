@@ -111,8 +111,21 @@ def observations(archive, day):
 _PREFIX = {"det_mm": "precip", "det_t": "t2m", "ens_prob": "precip_prob"}
 
 
-def _point_site(name, lat, lon, gauges):
-    """ตำแหน่งในไฟล์ runs → site_id: โทรมาตร ThaiWater ที่ห่าง < 150 ม. หรือ loc:<พิกัด>"""
+def _tmd_stations(archive):
+    files = sorted((Path(archive) / "obs" / "tmd3h").glob("*.csv"))[-3:]
+    if not files:
+        return pd.DataFrame(columns=["id", "lat", "lon"])
+    d = pd.concat([pd.read_csv(f, dtype={"id": str}) for f in files], ignore_index=True)
+    return d.drop_duplicates("id")[["id", "lat", "lon"]]
+
+
+def _point_site(name, lat, lon, gauges, tmd=None):
+    """ตำแหน่งในไฟล์ runs → site_id: สถานีอุตุนิยมวิทยา (ชื่อขึ้นต้น "สถานี") หรือโทรมาตร ThaiWater ที่ห่าง < 150 ม. หรือ loc:<พิกัด>"""
+    if tmd is not None and len(tmd) and str(name).startswith("สถานี"):
+        dt = (tmd.lat - lat) ** 2 + ((tmd.lon - lon) * np.cos(np.radians(lat))) ** 2
+        j = int(np.argmin(dt.to_numpy()))
+        if np.sqrt(dt.iloc[j]) * 111 < 0.15:
+            return "tmd:" + str(tmd.id.iloc[j])
     d = (gauges.lat - lat) ** 2 + ((gauges.lon - lon) * np.cos(np.radians(lat))) ** 2
     i = int(np.argmin(d.to_numpy()))
     if np.sqrt(d.iloc[i]) * 111 < 0.15:
@@ -123,6 +136,7 @@ def _point_site(name, lat, lon, gauges):
 def forecast_points(archive, day, gauges):
     base = Path(archive) / "runs" / f"{day:%Y/%m/%d}"
     frames, sites, runs = [], {}, []
+    tmd = _tmd_stations(archive)
     for f in sorted(base.glob("*.csv.gz")):
         x = _read_csv(f)
         meta_f = f.with_name(f.name.replace(".csv.gz", ".runs.json"))
@@ -134,7 +148,7 @@ def forecast_points(archive, day, gauges):
         lat, lon, name = float(x.lat.iloc[0]), float(x.lon.iloc[0]), str(x.location.iloc[0])
         key = (round(lat, 4), round(lon, 4))
         if key not in sites:
-            sid = _point_site(name, lat, lon, gauges)
+            sid = _point_site(name, lat, lon, gauges, tmd)
             sites[key] = {"site_id": sid, "network": sid.split(":")[0], "native_id": sid.split(":", 1)[1], "name": name,
                           "lat": lat, "lon": lon, "source_id": "thaiwater" if sid.startswith("tw:") else "openmeteo", "seen": fetched}
         sid = sites[key]["site_id"]

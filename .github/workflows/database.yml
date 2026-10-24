@@ -2,7 +2,6 @@
 #
 #   ทุกวัน 2 รอบ (09:20 และ 21:20 UTC)
 #     grid  ดึงพยากรณ์กริด th025 ของ ECMWF IFS / AIFS และ NOAA GFS รอบ 00/12 UTC ที่ยังขาด (ย้อนได้ 3 วัน)
-#     points พยากรณ์ ณ สถานีอุตุนิยมวิทยาทุกแห่งจากทุกแบบจำลองใน Open-Meteo
 #     etl   แปลงคลังรายชั่วโมง (branch data) ของวันที่ยังไม่ได้แปลงใน 7 วันล่าสุด (ถึง 2 วันก่อน) เป็น Parquet
 #   วันที่ 3 ของทุกเดือน 02:40 UTC
 #     history ปรับปรุงค่าตรวจวัดรายชั่วโมงของปีปัจจุบันจาก NOAA GHCNh (release db-history)
@@ -62,8 +61,10 @@ jobs:
         if: env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'grid'
         run: python -m wxdb grid ${{ env.WXDB_TASK == 'grid' && inputs.args || '' }}
 
-      - name: พยากรณ์ ณ สถานีอุตุนิยมวิทยาทุกแห่ง
-        if: env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'points'
+      # พยากรณ์ ณ สถานีอุตุนิยมวิทยาทุกแห่งเก็บโดย collect.yml ทุก 6 ชม. (จุดตรวจทั่วประเทศ) แล้วเข้าฐานข้อมูลผ่าน etl
+      # คำสั่ง points ใช้ดึงเพิ่มเองเมื่อต้องการ (มีความชื้นสัมพัทธ์) — ไม่รันตามตารางเพื่อประหยัดโควตา Open-Meteo
+      - name: พยากรณ์ ณ สถานีอุตุนิยมวิทยาทุกแห่ง (สั่งรันเอง)
+        if: env.WXDB_TASK == 'points'
         run: python -m wxdb points
 
       - name: เตรียม branch data

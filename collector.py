@@ -47,6 +47,13 @@ def cmd_run(args):
             weather_national.update(args.export_dir, site_dir=getattr(args, "site_dir", None))
         except Exception as e:
             print(f"⚠️ ทั่วประเทศ: {e}")
+        # แค็ตตาล็อกข้อมูล (หน้า data.html)
+        if getattr(args, "site_dir", None):
+            import weather_catalog
+            try:
+                weather_catalog.build(args.export_dir, args.site_dir)
+            except Exception as e:
+                print(f"⚠️ แค็ตตาล็อก: {e}")
     print(pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"))
     print(log.to_string(index=False))
     return 0 if (log.status == "ok").all() else 1

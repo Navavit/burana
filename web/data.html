@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ข้อมูลและแหล่งที่มา</title>
+  <meta name="description" content="รายละเอียดของชุดข้อมูลทั้งหมดในระบบ: แหล่งที่มา จำนวนสถานี ความครอบคลุม ความถี่ที่ต้นทางปรับปรุง ความล่าช้า ช่วงเวลา และที่จัดเก็บ">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="data-page">
+  <header class="top">
+    <div class="wrap top-row">
+      <div>
+        <h1>📚 ข้อมูลและแหล่งที่มา</h1>
+        <p class="sub" id="updated">กำลังโหลด…</p>
+      </div>
+      <a class="ghost back" href="./">← หน้าหลัก</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p class="lead">รายละเอียดของทุกชุดข้อมูลที่ระบบรวบรวม ได้แก่ แหล่งที่มา จำนวนสถานีและความครอบคลุม ความละเอียดเชิงเวลา
+      <b>ความถี่ที่ต้นทางปรับปรุงข้อมูล</b> ความล่าช้าจากเวลาจริง ช่วงเวลาที่มีข้อมูล ที่จัดเก็บ และข้อจำกัด
+      ตัวเลขสถิติคำนวณใหม่ทุกชั่วโมงจากข้อมูลจริง · โครงสร้างฐานข้อมูลดูที่ <a id="db-doc" target="_blank" rel="noopener">docs/DATABASE.md</a></p>
+
+    <div class="d-cards" id="cards"></div>
+
+    <nav class="d-toc" aria-label="สารบัญ">
+      <a href="#overview">① ภาพรวมชุดข้อมูล</a><a href="#models">② รอบการประมวลผลของแบบจำลอง</a><a href="#map-sec">③ แผนที่เครือข่ายสถานี</a>
+      <a href="#details">④ รายละเอียดรายชุดข้อมูล</a><a href="#schedule">⑤ ตารางการปรับปรุงของระบบ</a><a href="#database">⑥ ฐานข้อมูล</a>
+    </nav>
+
+    <section id="overview">
+      <h2>① ภาพรวมชุดข้อมูล</h2>
+      <p class="note"><b>ต้นทางปรับปรุง</b> = ความถี่ที่หน่วยงานต้นทางเผยแพร่ข้อมูลใหม่ · <b>ความละเอียดเชิงเวลา</b> = ช่วงเวลาของข้อมูลแต่ละค่า ·
+        <b>ต้นทางล่าช้า</b> = ระยะเวลาตั้งแต่เวลาของข้อมูลจนถึงเวลาที่เผยแพร่ · <b>ระบบดึง</b> = รอบที่ระบบนี้นำเข้าข้อมูล</p>
+      <div class="table-wrap" id="overview-table"></div>
+    </section>
+
+    <section id="models">
+      <h2>② รอบการประมวลผลของแบบจำลองพยากรณ์</h2>
+      <p class="note">ข้อมูลจาก metadata ของ Open-Meteo (ปรับปรุงทุกชั่วโมง) · <b>ล่าช้า</b> = เวลาที่รอบล่าสุดพร้อมใช้งาน − เวลาเริ่มต้นของรอบ ·
+        แบบจำลองที่ไม่มี metadata ใช้ค่าประมาณ</p>
+      <div class="table-wrap" id="models-table"></div>
+    </section>
+
+    <section id="map-sec">
+      <h2>③ แผนที่เครือข่ายสถานี</h2>
+      <div class="chips" id="layers" role="group" aria-label="ชั้นข้อมูล"></div>
+      <div id="dmap" class="map" role="region" aria-label="แผนที่สถานี"></div>
+      <p class="note" id="map-note"></p>
+    </section>
+
+    <section id="details">
+      <h2>④ รายละเอียดรายชุดข้อมูล</h2>
+      <div id="detail-list"></div>
+    </section>
+
+    <section id="schedule">
+      <h2>⑤ ตารางการปรับปรุงของระบบ</h2>
+      <div class="table-wrap" id="schedule-table"></div>
+    </section>
+
+    <section id="database">
+      <h2>⑥ ฐานข้อมูลระยะยาว (wxdb)</h2>
+      <p class="note" id="db-note"></p>
+      <div class="table-wrap" id="db-table"></div>
+    </section>
+
+    <section id="cite">
+      <h2>เงื่อนไขการใช้และการอ้างอิง</h2>
+      <ul class="d-list">
+        <li>ข้อมูลแต่ละชุดอยู่ภายใต้สัญญาอนุญาตของหน่วยงานต้นทาง (ระบุในตารางข้างต้น) การเผยแพร่ต่อหรือใช้ในงานวิจัยควรอ้างอิงหน่วยงานต้นทางตามเงื่อนไขนั้น</li>
+        <li>ข้อมูลพยากรณ์จาก Open-Meteo ใช้ได้เฉพาะงานที่ไม่ใช่เชิงพาณิชย์ และต้องแสดงที่มา “Weather data by Open-Meteo.com” (CC BY 4.0)</li>
+        <li>ผลพยากรณ์เป็นผลจากแบบจำลองเชิงตัวเลข มิใช่ประกาศอย่างเป็นทางการของหน่วยงานใด</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="wrap foot"><p><a href="./">← กลับหน้าหลัก</a> · <a id="repo-link" target="_blank" rel="noopener">รหัสต้นฉบับ</a></p></footer>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="data.js"></script>
+</body>
+</html>

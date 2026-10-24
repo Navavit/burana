@@ -679,8 +679,9 @@ const winKey = (w) => (/^\+(\d+)/.exec(w) ? `+${/^\+(\d+)/.exec(w)[1]}` : /^D\+(
 function userScope() {
   const U = state.verify?.user_mode;
   if (!U) return null;
-  const name = state.loc?.name;
-  return { name: name && U.scopes[name] ? name : "ทุกตำแหน่ง", data: U.scopes[name] || U.scopes["ทุกตำแหน่ง"] || {} };
+  // ตำแหน่งที่มีจุดตรวจของตัวเองใช้ชื่อตำแหน่ง มิฉะนั้นใช้จังหวัดของสถานีอุตุนิยมวิทยาที่ใกล้ที่สุด (จุดตรวจทั่วประเทศ)
+  const name = state.loc?.name && U.scopes[state.loc.name] ? state.loc.name : state.nearProv && U.scopes[state.nearProv] ? state.nearProv : null;
+  return { name: name || "ทุกตำแหน่ง", data: (name && U.scopes[name]) || U.scopes["ทุกตำแหน่ง"] || {} };
 }
 function medianRow(w) {
   const U = state.verify?.user_mode, sc = userScope();
@@ -719,7 +720,7 @@ function renderUserMode() {
   const med = rows.find((r) => r.model === U.median);
   const models = rows.filter((r) => r.model !== U.median && r.model !== U.ens && r.n_rain >= 3);
   const best = [...models].sort((a, b) => (b.csi ?? 0) - (a.csi ?? 0))[0];
-  const scopeTxt = sc.name === "ทุกตำแหน่ง" ? "ทุกจุดตรวจ" : `จุดตรวจของ${sc.name}`;
+  const scopeTxt = sc.name === "ทุกตำแหน่ง" ? "ทุกจุดตรวจ" : state.loc?.name === sc.name ? `จุดตรวจของ${sc.name}` : `จุดตรวจในจังหวัด${sc.name} (สถานีที่ใกล้ที่สุด)`;
   $("u-summary").replaceChildren(el("p", {}, ...(med ? [
     el("b", {}, U_WIN_TEXT[w]), `: เมื่อระบบ (ค่ามัธยฐานของทุกแบบจำลอง) พยากรณ์ว่ามีฝน → `, el("b", {}, `เกิดจริง ${fmt(med.sr10 ?? 0, 0)} ใน 10 ครั้ง`),
     ` · เมื่อเกิดฝน → `, el("b", {}, `พยากรณ์ไว้ล่วงหน้า ${fmt(med.pod10 ?? 0, 0)} ใน 10 ครั้ง`),
@@ -849,8 +850,18 @@ function renderVerify() {
     $("v-note").textContent = `ค่าวัด ${pick.n_obs.toLocaleString("th-TH")} ครั้ง จาก ${pick.n_points} จุด${thr ? " · " + thr : ""}`;
   }
   const pts = (V.points || []).filter((p) => !src.kind || p.kind === src.kind);
-  $("v-points").replaceChildren(...(pts.length ? [el("b", {}, "จุดตรวจที่ใช้:"),
-    el("ul", {}, pts.map((p) => el("li", {}, `${p.for} → ${p.name} (ห่าง ${fmt(p.dist_km)} กม.)`)))] :
+  const local = pts.filter((p) => !p.national), nat = pts.filter((p) => p.national);
+  const byProv = {};
+  nat.forEach((p) => (byProv[p.for] = byProv[p.for] || []).push(p.name.replace(/^สถานี/, "")));
+  $("v-points").replaceChildren(...(pts.length ? [
+    local.length ? [el("b", {}, "จุดตรวจของตำแหน่งหลัก (พยากรณ์ทุกชั่วโมง):"),
+      el("ul", {}, local.map((p) => el("li", {}, `${p.for} → ${p.name} (ห่าง ${fmt(p.dist_km)} กม.)`)))] : [],
+    nat.length ? el("details", { class: "nat-points" },
+      el("summary", {}, el("b", {}, `จุดตรวจทั่วประเทศ: สถานีอุตุนิยมวิทยา ${nat.length} แห่ง ใน ${Object.keys(byProv).length} จังหวัด`),
+        " (พยากรณ์อุณหภูมิและฝนทุก 6 ชม.)"),
+      el("ul", { class: "cols" }, Object.keys(byProv).sort((a, b) => a.localeCompare(b, "th")).map((pv) =>
+        el("li", {}, el("b", {}, pv), ": ", byProv[pv].join(", "))))) : null,
+    el("p", { class: "note" }, el("a", { href: "data.html#details" }, "รายละเอียดของข้อมูลทั้งหมด →"))] :
     src.key === "national" ? [el("div", {}, "ทั่วประเทศ: สถานีอุตุฯ ~124 แห่ง (สรุป 07.00 น.) เทียบพยากรณ์ที่ทายไว้ล่วงหน้า ≥ 24, 72, 168 ชม. ทุกชั่วโมง (Open-Meteo Previous Runs)")] : []));
 }
 // ---------------------------------------------------------------------------
@@ -1791,6 +1802,7 @@ async function renderNearSkill() {
     if (d < dmin) { dmin = d; s = x; }
   }
   if (!s) { box.replaceChildren(); return; }
+  if (state.nearProv !== s.province) { state.nearProv = s.province; renderUserMode(); }
   const top = (v, k) => {
     const t = s.scores?.[v]?.H24 || {};
     const arr = Object.entries(t).filter(([, a]) => a[0] != null);
