@@ -18,8 +18,10 @@ const dt = (s) => (s ? new Date(s.length === 10 ? s : s.replace(" ", "T")).toLoc
 const GROUPS = { obs: "ค่าตรวจวัด", hist: "ข้อมูลย้อนหลัง", fc: "ผลพยากรณ์", derived: "ผลการประมวลผล", ref: "ข้อมูลอ้างอิง" };
 
 // จำนวน/ขอบเขต และช่วงเวลา ของแต่ละชุดข้อมูล (จากสถิติจริง)
+let ST = () => ({});                                    // สถิติของชุดอื่น (กำหนดใน main)
 function coverage(d) {
   const s = d.stats || {};
+  const tmd = ST("tmd3h").count, tw = ST("twday").count, loc = ST("om_locations"), chk = ST("tw_check");
   const c = {
     tmd3h: s.count && `${num(s.count)} สถานี`, tmdday: s.count && `${num(s.count)} สถานี`, twday: s.count && `${num(s.count)} เครื่อง`,
     tw_check: s.count && `${num(s.active)} เครื่องที่รายงานอยู่ (จาก ${num(s.count)})`, air4thai: s.count && `${num(s.count)} สถานี`,
@@ -27,24 +29,32 @@ function coverage(d) {
     om_locations: s.count && `${num(s.count)} จุด · ${num(s.models)} แบบจำลอง + ${num(s.ensembles)} ensemble`,
     om_stations: s.count && `${num(s.count)} สถานี · ${num(s.provinces)} จังหวัด · ${num(s.models)} แบบจำลอง`,
     province_fc: "77 จังหวัด · 4 แบบจำลอง", heatsafe: `50 เขต${s.models ? ` · ${s.models} แบบจำลอง` : ""}`, grid: "957 เซลล์ · 3 แบบจำลอง",
+    prevruns: tmd && `${num(tmd)} สถานี + ${num(tw)} เครื่องโทรมาตร`,
+    tmdwrf: loc.count && `${num(loc.count)} จุด`, google: "3 จุด (กรุงเทพมหานคร)",
+    hii: chk.active != null && `${num((chk.active || 0) + 2)} จุด`,
+    pairs: tmd && `${num(tmd)} สถานี + ${num(tw)} เครื่องโทรมาตร + ${num(chk.active)} จุดตรวจ`,
+    refs: "77 จังหวัด · 6 ภาค · 50 เขต · 957 เซลล์",
   }[d.id];
-  return c || d.spatial;
+  return c || "–";
 }
 function period(d) {
   const s = d.stats || {};
+  const norm = (x) => { x = String(x); return /^\d{8}/.test(x) ? `${x.slice(0, 4)}-${x.slice(4, 6)}-${x.slice(6, 8)}` : x.slice(0, 10); };
   const from = s.from || s.first, to = s.to || s.latest;
   if (!from && !to) return "–";
-  return `${from ? dt(String(from).length === 8 ? `${from.slice(0, 4)}-${from.slice(4, 6)}-${from.slice(6, 8)}` : from) : "–"} → ${to ? dt(String(to).slice(0, 10).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3")) : "ปัจจุบัน"}`;
+  if (!from) return `ผลล่าสุด ${dt(norm(to))}`;
+  return `${dt(norm(from))} → ${to ? dt(norm(to)) : "ปัจจุบัน"}`;
 }
 
 async function main() {
   const C = await fetch("data/catalog.json", { cache: "no-cache" }).then((r) => r.json());
   const repo = (await fetch("data/index.json").then((r) => r.json()).catch(() => ({}))).repo || "Navavit/consolidated-weather";
-  $("db-doc").href = `https://github.com/${repo}/blob/main/docs/DATABASE.md`;
+  if ($("db-doc")) $("db-doc").href = `https://github.com/${repo}/blob/main/docs/DATABASE.md`;
   $("repo-link").href = `https://github.com/${repo}`;
   $("updated").textContent = `ปรับปรุง ${new Date(C.generated).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })}`;
   const ds = C.datasets;
   const st = (id) => (ds.find((d) => d.id === id) || {}).stats || {};
+  ST = st;
   const DB = C.database || {};
   // การ์ดสรุป
   const nStations = (st("tmd3h").count || 0) + (st("twday").count || 0) + (st("air4thai").count || 0);
@@ -55,16 +65,36 @@ async function main() {
     ["แบบจำลองพยากรณ์", C.models.length, `+ ensemble ${C.ensembles.length} ระบบ`],
     ["ฐานข้อมูล", size(DB.total_bytes), `${num(DB.total_rows)} แถว`],
   ].map(([k, v, s]) => el("div", { class: "d-card" }, el("div", { class: "k" }, k), el("div", { class: "v" }, v), el("div", { class: "s" }, s))));
-  // ① ภาพรวม
-  const head = ["ชุดข้อมูล / ผู้ผลิต", "ต้นทางปรับปรุงข้อมูล", "ต้นทางล่าช้า", "ความละเอียดเชิงเวลา", "จำนวน / ขอบเขต", "ช่วงเวลาที่มีในระบบ", "ระบบดึง"];
-  $("overview-table").replaceChildren(el("table", { class: "d-table d-overview" },
-    el("thead", {}, el("tr", {}, ...head.map((h) => el("th", {}, h)))),
-    ...Object.entries(GROUPS).map(([g, gname]) => el("tbody", {},
-      el("tr", { class: "grp" }, el("th", { colspan: String(head.length) }, gname)),
-      ds.filter((d) => d.group === g).map((d) => el("tr", {},
-        el("td", {}, el("a", { href: `#ds-${d.id}` }, d.name), el("div", { class: "muted" }, d.provider)),
-        el("td", { class: "hl" }, d.source_update), el("td", {}, d.latency), el("td", {}, d.native),
-        el("td", {}, coverage(d)), el("td", {}, period(d)), el("td", { class: "muted" }, d.update)))))));
+  // ① รายการชุดข้อมูล: ตารางเดียว สลับมุมมองคอลัมน์ (ไม่แสดงข้อมูลเดียวกันซ้ำหลายที่)
+  const split = (s) => { const [a, b] = String(s || "").split(" · ฐานข้อมูล: "); return [a.replace(/^branch data:\s*/, ""), b || (a.startsWith("ฐานข้อมูล") ? a.replace(/^ฐานข้อมูล:\s*/, "") : "")]; };
+  const VIEWS = {
+    source: { label: "แหล่งข้อมูล", note: "หน่วยงานผู้ผลิต ตัวแปร ความครอบคลุมเชิงพื้นที่ (จำนวนปัจจุบันคำนวณจากข้อมูลจริง) และสัญญาอนุญาต",
+      cols: [["หน่วยงาน", (d) => d.url ? el("a", { href: d.url, target: "_blank", rel: "noopener" }, d.provider) : d.provider],
+        ["ตัวแปรและหน่วย", (d) => d.variables], ["ความครอบคลุมเชิงพื้นที่", (d) => d.spatial],
+        ["สัญญาอนุญาต", (d) => d.license]] },
+    time: { label: "ช่วงเวลา", note: "ต้นทางปรับปรุง = ความถี่ที่หน่วยงานต้นทางเผยแพร่ข้อมูลใหม่ · ต้นทางล่าช้า = ระยะเวลาตั้งแต่เวลาของข้อมูลจนถึงเวลาที่เผยแพร่ · ความละเอียดเชิงเวลา = ช่วงเวลาของข้อมูลแต่ละค่า",
+      cols: [["ต้นทางปรับปรุง", (d) => el("b", {}, d.source_update)], ["ต้นทางล่าช้า", (d) => d.latency],
+        ["ความละเอียดเชิงเวลา", (d) => d.native], ["ช่วงเวลาที่มีในระบบ", (d) => period(d)]] },
+    store: { label: "วิธีจัดเก็บ", note: `ระบบดึง = รอบที่ระบบนี้นำเข้าข้อมูล · คลังระยะสั้น = branch data (เก็บไม่เกิน ~35 วัน) · ฐานข้อมูล = ไฟล์ Parquet บน GitHub Releases (รวม ${num(DB.total_rows)} แถว · ${size(DB.total_bytes)})`,
+      cols: [["ระบบดึง", (d) => d.update], ["คลังระยะสั้น", (d) => el("code", {}, split(d.storage)[0] || "–")],
+        ["ฐานข้อมูล", (d) => split(d.storage)[1] || "–"], ["ขนาดในฐานข้อมูล", (d) => d.stats?.rows ? `${num(d.stats.rows)} แถว · ${size(d.stats.bytes)}` : "–"]] },
+    use: { label: "การใช้งานและข้อจำกัด", note: "",
+      cols: [["การใช้ในระบบ", (d) => d.use], ["ข้อจำกัด", (d) => d.limits || "–"]] },
+  };
+  let view = "source";
+  const renderTable = () => {
+    const V = VIEWS[view];
+    $("views").replaceChildren(...Object.entries(VIEWS).map(([k, v]) => el("button", { class: "chip", role: "tab", type: "button",
+      "aria-selected": String(k === view), onclick: () => { view = k; renderTable(); } }, v.label)));
+    $("view-note").textContent = V.note;
+    $("ds-table").replaceChildren(el("table", { class: "d-table d-overview" },
+      el("thead", {}, el("tr", {}, el("th", {}, "ชุดข้อมูล"), el("th", {}, "จำนวนสถานี / จุด"), ...V.cols.map(([h]) => el("th", {}, h)))),
+      ...Object.entries(GROUPS).map(([g, gname]) => el("tbody", {},
+        el("tr", { class: "grp" }, el("th", { colspan: String(V.cols.length + 2) }, gname)),
+        ds.filter((d) => d.group === g).map((d) => el("tr", {}, el("td", {}, el("b", {}, d.name)),
+          el("td", { class: "cnt" }, coverage(d)), ...V.cols.map(([, f]) => el("td", {}, f(d)))))))));
+  };
+  renderTable();
   // ② แบบจำลอง
   const M = C.model_runs || [];
   $("models-table").replaceChildren(el("table", { class: "d-table" },
@@ -78,29 +108,6 @@ async function main() {
       el("td", { class: "num" }, m.latency_h != null && !m.stale ? `${num(m.latency_h, 1)} ชม.` : "–"),
       el("td", { class: "num" }, m.last_init || "–"),
       el("td", {}, m.stale ? "⚠️ หยุดปรับปรุง" : m.source === "metadata" ? "✓ ปกติ" : m.source || "–"))))));
-  // ④ รายละเอียด
-  const rows = [["ผู้ผลิต / หน่วยงาน", "provider"], ["ตัวแปรและหน่วย", "variables"], ["ความครอบคลุมเชิงพื้นที่", "spatial"],
-    ["ความละเอียดเชิงเวลา", "native"], ["ต้นทางปรับปรุง", "source_update"], ["ต้นทางล่าช้า", "latency"], ["ระบบดึง", "update"],
-    ["ที่จัดเก็บ", "storage"], ["การใช้ในระบบ", "use"], ["สัญญาอนุญาต", "license"], ["ข้อจำกัด", "limits"]];
-  $("detail-list").replaceChildren(...ds.map((d) => el("article", { class: "d-detail", id: `ds-${d.id}` },
-    el("h3", {}, d.name, el("span", { class: "tag" }, GROUPS[d.group])),
-    el("dl", {},
-      ...rows.filter(([, k]) => d[k]).flatMap(([lab, k]) => [el("dt", {}, lab), el("dd", {}, d[k])]),
-      el("dt", {}, "จำนวน / ขอบเขต (ปัจจุบัน)"), el("dd", {}, coverage(d)),
-      el("dt", {}, "ช่วงเวลาที่มีในระบบ"), el("dd", {}, period(d)),
-      d.stats?.rows ? [el("dt", {}, "ขนาดในฐานข้อมูล"), el("dd", {}, `${num(d.stats.rows)} แถว · ${size(d.stats.bytes)} · ${d.stats.files} ไฟล์`)] : null,
-      d.url ? [el("dt", {}, "แหล่งที่มา"), el("dd", {}, el("a", { href: d.url, target: "_blank", rel: "noopener" }, d.url))] : null))));
-  // ⑤ ตารางการปรับปรุง
-  $("schedule-table").replaceChildren(el("table", { class: "d-table" },
-    el("thead", {}, el("tr", {}, ...["รอบ", "workflow", "งาน"].map((h) => el("th", {}, h)))),
-    el("tbody", {}, C.schedule.map((s) => el("tr", {}, el("td", {}, s.when), el("td", {}, el("code", {}, s.workflow)), el("td", {}, s.what))))));
-  // ⑥ ฐานข้อมูล
-  const T = DB.tables || {};
-  $("db-note").textContent = `ไฟล์ Parquet บน GitHub Releases · ${num(DB.total_rows)} แถว · ${size(DB.total_bytes)} · manifest ปรับปรุง ${DB.generated || "–"}`;
-  $("db-table").replaceChildren(el("table", { class: "d-table" },
-    el("thead", {}, el("tr", {}, ...["ตาราง", "ไฟล์", "แถว", "ขนาด", "ช่วงเวลา"].map((h) => el("th", {}, h)))),
-    el("tbody", {}, Object.entries(T).sort().map(([t, v]) => el("tr", {}, el("td", {}, el("code", {}, t)), el("td", { class: "num" }, num(v.files)),
-      el("td", { class: "num" }, num(v.rows)), el("td", { class: "num" }, size(v.bytes)), el("td", {}, v.from ? `${dt(v.from)} → ${dt(v.to)}` : "ตารางมิติ"))))));
   initMap(C);
 }
 

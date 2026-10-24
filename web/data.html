@@ -28,15 +28,14 @@
     <div class="d-cards" id="cards"></div>
 
     <nav class="d-toc" aria-label="สารบัญ">
-      <a href="#overview">① ภาพรวมชุดข้อมูล</a><a href="#models">② รอบการประมวลผลของแบบจำลอง</a><a href="#map-sec">③ แผนที่เครือข่ายสถานี</a>
-      <a href="#details">④ รายละเอียดรายชุดข้อมูล</a><a href="#schedule">⑤ ตารางการปรับปรุงของระบบ</a><a href="#database">⑥ ฐานข้อมูล</a>
+      <a href="#datasets">① รายการชุดข้อมูล</a><a href="#models">② รอบการประมวลผลของแบบจำลอง</a><a href="#map-sec">③ แผนที่เครือข่ายสถานี</a>
     </nav>
 
-    <section id="overview">
-      <h2>① ภาพรวมชุดข้อมูล</h2>
-      <p class="note"><b>ต้นทางปรับปรุง</b> = ความถี่ที่หน่วยงานต้นทางเผยแพร่ข้อมูลใหม่ · <b>ความละเอียดเชิงเวลา</b> = ช่วงเวลาของข้อมูลแต่ละค่า ·
-        <b>ต้นทางล่าช้า</b> = ระยะเวลาตั้งแต่เวลาของข้อมูลจนถึงเวลาที่เผยแพร่ · <b>ระบบดึง</b> = รอบที่ระบบนี้นำเข้าข้อมูล</p>
-      <div class="table-wrap" id="overview-table"></div>
+    <section id="datasets">
+      <h2>① รายการชุดข้อมูล</h2>
+      <div class="chips" id="views" role="tablist" aria-label="มุมมองของตาราง"></div>
+      <p class="note" id="view-note"></p>
+      <div class="table-wrap" id="ds-table"></div>
     </section>
 
     <section id="models">
@@ -51,22 +50,6 @@
       <div class="chips" id="layers" role="group" aria-label="ชั้นข้อมูล"></div>
       <div id="dmap" class="map" role="region" aria-label="แผนที่สถานี"></div>
       <p class="note" id="map-note"></p>
-    </section>
-
-    <section id="details">
-      <h2>④ รายละเอียดรายชุดข้อมูล</h2>
-      <div id="detail-list"></div>
-    </section>
-
-    <section id="schedule">
-      <h2>⑤ ตารางการปรับปรุงของระบบ</h2>
-      <div class="table-wrap" id="schedule-table"></div>
-    </section>
-
-    <section id="database">
-      <h2>⑥ ฐานข้อมูลระยะยาว (wxdb)</h2>
-      <p class="note" id="db-note"></p>
-      <div class="table-wrap" id="db-table"></div>
     </section>
 
     <section id="cite">

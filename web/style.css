@@ -384,5 +384,6 @@ body.heat-mode #edit-loc, body.heat-mode .steps, body.heat-mode .timebase { disp
 .nat-points li { break-inside: avoid; margin: 2px 0; color: var(--ink-2); }
 .d-overview { table-layout: fixed; min-width: 980px; }
 .d-overview td, .d-overview th { white-space: normal; overflow-wrap: anywhere; }
-.d-overview th:nth-child(1) { width: 22%; } .d-overview th:nth-child(2) { width: 22%; } .d-overview th:nth-child(3) { width: 11%; }
-.d-overview th:nth-child(4) { width: 11%; } .d-overview th:nth-child(5) { width: 13%; } .d-overview th:nth-child(6) { width: 11%; } .d-overview th:nth-child(7) { width: 10%; }
+.d-overview th:first-child { width: 22%; } .d-overview th:nth-child(2) { width: 14%; }
+.d-overview td.cnt { font-weight: 700; color: var(--ink); }
+#views { margin: 6px 0; }

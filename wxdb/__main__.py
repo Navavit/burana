@@ -227,7 +227,13 @@ def _write_reanalysis(jobs, man, d, replace):
 
 
 def cmd_pack(a):
-    month = a.month or (pd.Timestamp.now(tz="UTC").tz_localize(None).to_period("M") - 1).strftime("%Y-%m")
+    now = pd.Timestamp.now(tz="UTC").tz_localize(None)
+    if a.current:                                       # รวมเดือนปัจจุบัน (รายวัน) — ตัดแถวซ้ำข้ามไฟล์รายวันทันที
+        for m in ([(now.to_period("M") - 1).strftime("%Y-%m")] if now.day <= 3 else []) + [now.strftime("%Y-%m")]:
+            a.month, a.current = m, False
+            cmd_pack(a)
+        return
+    month = a.month or (now.to_period("M") - 1).strftime("%Y-%m")
     tag = f"db-{month}"
     assets = [x["name"] for x in store.list_assets(tag)]
     man = store.load_manifest()
@@ -298,6 +304,7 @@ def main(argv=None):
     rp.set_defaults(fn=cmd_reanalysis)
     k = s.add_parser("pack")
     k.add_argument("--month")
+    k.add_argument("--current", action="store_true", help="รวมไฟล์รายวันของเดือนปัจจุบัน (และเดือนก่อนใน 3 วันแรก)")
     k.set_defaults(fn=cmd_pack)
     r = s.add_parser("prune")
     r.add_argument("--archive", default="archive")

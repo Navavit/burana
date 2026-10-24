@@ -77,6 +77,10 @@ jobs:
         if: env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'etl'
         run: python -m wxdb etl --archive archive ${{ env.WXDB_TASK == 'etl' && inputs.args || '' }}
 
+      - name: รวมไฟล์รายวันของเดือนปัจจุบัน (ตัดแถวซ้ำข้ามไฟล์)
+        if: env.WXDB_TASK == 'daily'
+        run: python -m wxdb pack --current
+
       - name: สรุปสถานะ
         if: always()
         run: python -m wxdb status >> "$GITHUB_STEP_SUMMARY" || true
