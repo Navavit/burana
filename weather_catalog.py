@@ -107,7 +107,7 @@ DATASETS = [
      "variables": "ฝนและอุณหภูมิที่พยากรณ์ไว้ล่วงหน้า 1–7 วัน", "spatial": "สถานีอุตุนิยมวิทยาทุกแห่ง และโทรมาตรทุกเครื่อง",
      "native": "รายชั่วโมง", "update": "วันละครั้ง (หลังกรมอุตุนิยมวิทยาสรุปผล 07:00 น.)", "latency": "1 วัน",
      "storage": "branch data: verification/pairs/ · ฐานข้อมูล: verification_pair (obs_source = national, national3h)",
-     "use": "การตรวจสอบความถูกต้องระดับประเทศ ล่วงหน้า 24/72/168 ชม.", "limits": "", "live": None},
+     "use": "การตรวจสอบความถูกต้องระดับประเทศ ล่วงหน้า 24/72/168 ชม.", "limits": "", "live": "prevruns"},
     {"id": "province_fc", "group": "fc", "name": "พยากรณ์รายจังหวัด 7 วัน",
      "provider": "Open-Meteo (ECMWF IFS, ECMWF AIFS, NOAA GFS, DWD ICON)", "url": "https://open-meteo.com/", "license": "CC BY 4.0 (ใช้งานไม่เชิงพาณิชย์)",
      "variables": "อุณหภูมิสูงสุด/ต่ำสุด, ดัชนีความร้อนสูงสุด, ฝนรวม, ความน่าจะเป็นฝน (สัดส่วนแบบจำลอง)",
@@ -132,12 +132,12 @@ DATASETS = [
      "license": "TMD Open Data (ต้องลงทะเบียน)", "variables": "ฝน, อุณหภูมิ และตัวแปรอื่นรายชั่วโมง", "spatial": "ตำแหน่งหลักและจุดตรวจ",
      "native": "รายชั่วโมง ล่วงหน้า 48 ชม.", "update": "ทุกชั่วโมง", "latency": "ตามรอบของกรมอุตุนิยมวิทยา",
      "storage": "branch data: runs/ · ฐานข้อมูล: forecast_point (model_id = tmd_wrf)", "use": "แบบจำลองความละเอียดสูงของประเทศไทย",
-     "limits": "ต้องมี token", "live": None},
+     "limits": "ต้องมี token", "live": "tmdwrf"},
     {"id": "google", "group": "fc", "name": "Google Weather", "provider": "Google Maps Platform", "url": "https://developers.google.com/maps/documentation/weather",
      "license": "ตามเงื่อนไขของ Google (ภายในโควตาฟรี)", "variables": "ฝน อุณหภูมิ ความชื้นรายชั่วโมง",
      "spatial": "ตำแหน่งหลัก (กรุงเทพมหานคร) และจุดตรวจ 2 จุด", "native": "รายชั่วโมง ล่วงหน้า 10 วัน", "update": "ทุกชั่วโมง (จุดตรวจทุก 2 ชม.)",
      "latency": "ต่อเนื่อง", "storage": "branch data: runs/ · ฐานข้อมูล: forecast_point", "use": "เปรียบเทียบแบบจำลองเชิงพาณิชย์",
-     "limits": "จำกัดจำนวนคำขอให้อยู่ในโควตาฟรี", "live": None},
+     "limits": "จำกัดจำนวนคำขอให้อยู่ในโควตาฟรี", "live": "google"},
     {"id": "hii", "group": "fc", "name": "HII WRF-ROMS ฝนรายวัน", "provider": "สถาบันสารสนเทศทรัพยากรน้ำ (สสน.)", "url": "https://www.thaiwater.net/weather",
      "license": "เปิดเผย", "variables": "ช่วงฝนรายวัน (มม.) อ่านจากแถบสีของภาพ", "spatial": "ตำแหน่งหลักและโทรมาตรจุดตรวจ",
      "native": "รายวัน 19:00–19:00 น. ล่วงหน้า 7 วัน", "update": "วันละครั้ง (ภาพออก ~19:00 น.)", "latency": "~1–3 ชม.",
@@ -250,6 +250,23 @@ def _span(man, table, release_prefix=None, name_part=None):
             "rows": sum(f.get("rows", 0) for f in fs), "bytes": sum(f.get("bytes", 0) for f in fs), "files": len(fs)}
 
 
+def _first_run(archive, pts, frac=0.0):
+    """วันแรกที่จุดชุดนี้มีไฟล์พยากรณ์ใน runs/ (ชื่อไฟล์ <เวลาดึง>_<lat>_<lon>.csv.gz) ครบเกินสัดส่วน frac — None ถ้าไม่พบ
+    frac > 0 ใช้กับชุดที่บางจุดเคยเป็นจุดตรวจมาก่อน เพื่อให้ได้วันที่ชุดนั้นเริ่มเก็บจริง"""
+    keys = {f"_{p['lat']:.3f}_{p['lon']:.3f}.csv.gz" for p in pts}
+    seen = set()
+    for d in sorted((Path(archive) / "runs").glob("*/*/*")):
+        seen |= {f.name[15:] for f in d.glob("*.csv.gz")} & keys
+        if seen and len(seen) > frac * len(keys):
+            return "-".join(d.parts[-3:])
+    return None
+
+
+def _first_file(archive, sub, n=10):
+    files = sorted((Path(archive) / sub).glob("*.csv*"))
+    return files[0].name[:n] if files else None
+
+
 def live_stats(archive, man):
     a = Path(archive)
     pts = json.loads((a / "verification" / "points.json").read_text(encoding="utf-8")) if (a / "verification" / "points.json").exists() else []
@@ -280,6 +297,19 @@ def live_stats(archive, man):
     live["era5_land"] = {**_span(man, "reanalysis_daily", "db-history", "era5_land")}
     live["chirps"] = {**_span(man, "reanalysis_daily", "db-history", "chirps")}
     live["grid"] = {**_span(man, "forecast_grid"), "cells": 957}
+    # วันแรกที่ระบบมีข้อมูล (ความครอบคลุมเชิงเวลาของแอป) สำหรับชุดที่ไม่มีในสถิติข้างต้น
+    runs0 = _first_run(a, [{"lat": la, "lon": lo} for la, lo, *_ in core.resolve_locations()] + loc)
+    live["om_locations"]["first"] = runs0
+    live["om_stations"]["first"] = _first_run(a, nat, frac=0.5)
+    live["tmdwrf"] = live["google"] = {"first": runs0}
+    live.setdefault("province_fc", {})["first"] = _first_file(a, "national/daily")
+    live.setdefault("heatsafe", {})["first"] = _first_file(a, "heatsafe/daily")
+    if obs:
+        first = json.loads(obs[0].read_text(encoding="utf-8"))
+        live["user"].update({"first": first.get("obs_time", "")[:10],
+                             "latest": json.loads(obs[-1].read_text(encoding="utf-8")).get("obs_time", "")[:16]})
+    live["prevruns"] = {"first": min(filter(None, [live["tmdday"].get("first"), _first_file(a, "verification/gauges")]), default=None)}
+    live["pairs"]["first"] = min(filter(None, [live["tmd3h"].get("first"), live["tmdday"].get("first")]), default=live["pairs"]["first"])
     return live, pts
 
 

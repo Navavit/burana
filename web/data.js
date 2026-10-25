@@ -41,6 +41,7 @@ function period(d) {
   const s = d.stats || {};
   const norm = (x) => { x = String(x); return /^\d{8}/.test(x) ? `${x.slice(0, 4)}-${x.slice(4, 6)}-${x.slice(6, 8)}` : x.slice(0, 10); };
   const from = s.from || s.first, to = s.to || s.latest;
+  if (d.id === "refs") return "ข้อมูลคงที่";
   if (!from && !to) return "–";
   if (!from) return `ผลล่าสุด ${dt(norm(to))}`;
   return `${dt(norm(from))} → ${to ? dt(norm(to)) : "ปัจจุบัน"}`;
@@ -74,7 +75,7 @@ async function main() {
         ["สัญญาอนุญาต", (d) => d.license]] },
     time: { label: "ช่วงเวลา", note: "ต้นทางปรับปรุง = ความถี่ที่หน่วยงานต้นทางเผยแพร่ข้อมูลใหม่ · ต้นทางล่าช้า = ระยะเวลาตั้งแต่เวลาของข้อมูลจนถึงเวลาที่เผยแพร่ · ความละเอียดเชิงเวลา = ช่วงเวลาของข้อมูลแต่ละค่า",
       cols: [["ต้นทางปรับปรุง", (d) => el("b", {}, d.source_update)], ["ต้นทางล่าช้า", (d) => d.latency],
-        ["ความละเอียดเชิงเวลา", (d) => d.native], ["ช่วงเวลาที่มีในระบบ", (d) => period(d)]] },
+        ["ความละเอียดเชิงเวลา", (d) => d.native]] },
     store: { label: "วิธีจัดเก็บ", note: `ระบบดึง = รอบที่ระบบนี้นำเข้าข้อมูล · คลังระยะสั้น = branch data (เก็บไม่เกิน ~35 วัน) · ฐานข้อมูล = ไฟล์ Parquet บน GitHub Releases (รวม ${num(DB.total_rows)} แถว · ${size(DB.total_bytes)})`,
       cols: [["ระบบดึง", (d) => d.update], ["คลังระยะสั้น", (d) => el("code", {}, split(d.storage)[0] || "–")],
         ["ฐานข้อมูล", (d) => split(d.storage)[1] || "–"], ["ขนาดในฐานข้อมูล", (d) => d.stats?.rows ? `${num(d.stats.rows)} แถว · ${size(d.stats.bytes)}` : "–"]] },
@@ -88,11 +89,11 @@ async function main() {
       "aria-selected": String(k === view), onclick: () => { view = k; renderTable(); } }, v.label)));
     $("view-note").textContent = V.note;
     $("ds-table").replaceChildren(el("table", { class: "d-table d-overview" },
-      el("thead", {}, el("tr", {}, el("th", {}, "ชุดข้อมูล"), el("th", {}, "จำนวนสถานี / จุด"), ...V.cols.map(([h]) => el("th", {}, h)))),
+      el("thead", {}, el("tr", {}, el("th", {}, "ชุดข้อมูล"), el("th", {}, "จำนวนสถานี / จุด"), el("th", {}, "มีข้อมูลในระบบ"), ...V.cols.map(([h]) => el("th", {}, h)))),
       ...Object.entries(GROUPS).map(([g, gname]) => el("tbody", {},
-        el("tr", { class: "grp" }, el("th", { colspan: String(V.cols.length + 2) }, gname)),
+        el("tr", { class: "grp" }, el("th", { colspan: String(V.cols.length + 3) }, gname)),
         ds.filter((d) => d.group === g).map((d) => el("tr", {}, el("td", {}, el("b", {}, d.name)),
-          el("td", { class: "cnt" }, coverage(d)), ...V.cols.map(([, f]) => el("td", {}, f(d)))))))));
+          el("td", { class: "cnt" }, coverage(d)), el("td", { class: "cnt" }, period(d)), ...V.cols.map(([, f]) => el("td", {}, f(d)))))))));
   };
   renderTable();
   // ② แบบจำลอง
