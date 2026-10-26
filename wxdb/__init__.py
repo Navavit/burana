@@ -23,7 +23,11 @@ def connect(tables=None, months=None, cache_dir=None):
     from . import store
     man = store.load_manifest(fresh=False)
     con = duckdb.connect()
-    con.sql("INSTALL httpfs; LOAD httpfs; SET enable_progress_bar = false;")
+    con.sql("INSTALL httpfs; LOAD httpfs;")
+    try:                                                # ใน Jupyter ที่ไม่มี ipywidgets การตั้งค่านี้จะผิดพลาด
+        con.sql("SET enable_progress_bar = false;")
+    except Exception:                                   # noqa: BLE001
+        pass
     by_table = {}
     for f in man["files"]:
         if tables and f["table"] not in tables:

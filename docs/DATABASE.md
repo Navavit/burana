@@ -225,6 +225,25 @@ erDiagram
         bool ev_fc
         bool ev_ob
     }
+    forecast_prevrun {
+        string model_id PK
+        string site_id PK
+        timestamp valid_time PK
+        int lead_day PK
+        string var_id PK
+        float value
+    }
+    observation_qc {
+        string site_id PK
+        timestamp time PK
+        string var_id PK
+        int period_h PK
+        string source_id PK
+        string flag PK
+        float value
+        float ref
+        int n_ref
+    }
     reanalysis_daily {
         string dataset_id PK
         int cell_id PK
@@ -243,21 +262,27 @@ erDiagram
     model ||--o{ forecast_district : "model_id"
     model ||--o{ forecast_grid : "model_id"
     model ||--o{ forecast_point : "model_id"
+    model ||--o{ forecast_prevrun : "model_id"
     model ||--o{ run : "model_id"
     model ||--o{ verification_pair : "model_id"
     run ||--o{ forecast_grid : "(model_id, init_time)"
     site ||--o{ forecast_district : "site_id"
     site ||--o{ forecast_hii : "site_id"
     site ||--o{ forecast_point : "site_id"
+    site ||--o{ forecast_prevrun : "site_id"
     site ||--o{ observation : "site_id"
+    site ||--o{ observation_qc : "site_id"
     site ||--o{ verification_pair : "site_id"
     source ||--o{ model : "source_id"
     source ||--o{ observation : "source_id"
+    source ||--o{ observation_qc : "source_id"
     source ||--o{ reanalysis_daily : "dataset_id"
     source ||--o{ run : "source_id"
     source ||--o{ site : "source_id"
     variable ||--o{ forecast_point : "var_id"
+    variable ||--o{ forecast_prevrun : "var_id"
     variable ||--o{ observation : "var_id"
+    variable ||--o{ observation_qc : "var_id"
     variable ||--o{ verification_pair : "var_id"
 ```
 <!-- ER_END -->
@@ -529,14 +554,45 @@ python scripts/build_db_docs.py                # สร้าง ER และพ
 | `ev_fc` | จริง/เท็จ | พยากรณ์ว่าเกิดเหตุการณ์ (ฝน ≥ เกณฑ์) |
 | `ev_ob` | จริง/เท็จ | เกิดเหตุการณ์จริง |
 
+#### `forecast_prevrun`
+
+พยากรณ์ย้อนหลังรายชั่วโมง ณ สถานี จาก Open-Meteo Previous Runs: ค่าที่ทายไว้ล่วงหน้า N วัน (ใช้ศึกษาความถูกต้องย้อนหลังเมื่อยังไม่ได้เก็บรอบพยากรณ์จริง)  
+คีย์หลัก: `model_id, site_id, valid_time, var_id, lead_day` · คีย์นอก: `model_id` → `model.model_id`, `site_id` → `site.site_id`, `var_id` → `variable.var_id`
+
+| คอลัมน์ | ชนิด | คำอธิบาย |
+|---|---|---|
+| `model_id` | ข้อความ | แบบจำลอง |
+| `site_id` | ข้อความ | จุด |
+| `valid_time` | เวลา (UTC) | เวลาที่พยากรณ์ (UTC; สิ้นสุดชั่วโมงสะสม) |
+| `lead_day` | จำนวนเต็ม | N ของ previous_dayN: มาจากรอบที่ออกก่อนเวลาที่พยากรณ์ 24N–24N+23 ชม. โดยประมาณ |
+| `var_id` | ข้อความ | ตัวแปร |
+| `value` | ทศนิยม 32 บิต | ค่า (หน่วยตาม variable) |
+
+#### `observation_qc`
+
+ธงการควบคุมคุณภาพของค่าตรวจวัด (เฉพาะค่าที่ถูกตั้งธง) — ใช้คัดออกก่อนตรวจสอบความถูกต้อง  
+คีย์หลัก: `site_id, time, var_id, period_h, source_id, flag` · คีย์นอก: `site_id` → `site.site_id`, `var_id` → `variable.var_id`, `source_id` → `source.source_id`
+
+| คอลัมน์ | ชนิด | คำอธิบาย |
+|---|---|---|
+| `site_id` | ข้อความ | จุด |
+| `time` | เวลา (UTC) | เวลาสิ้นสุดช่วงตรวจวัด (UTC) |
+| `var_id` | ข้อความ | ตัวแปร |
+| `period_h` | จำนวนเต็ม | ช่วงสะสม (ชม.) |
+| `source_id` | ข้อความ | แหล่งข้อมูลของค่าตรวจวัด |
+| `flag` | ข้อความ | range | stuck | isolated_high | false_zero |
+| `value` | ทศนิยม 32 บิต | ค่าที่ถูกตั้งธง |
+| `ref` | ทศนิยม 32 บิต | ค่าอ้างอิง (มัธยฐานของสถานีข้างเคียง) |
+| `n_ref` | จำนวนเต็ม | จำนวนสถานีข้างเคียงที่ใช้ |
+
 #### `reanalysis_daily`
 
-ข้อมูลย้อนหลังเชิงกริดรายวัน (วัน UTC) ณ จุดศูนย์กลางเซลล์ th025: ERA5-Land และ CHIRPS ตั้งแต่ปี 2000  
+ข้อมูลย้อนหลังเชิงกริดรายวัน (วัน UTC) ณ จุดศูนย์กลางเซลล์ th025: ERA5-Land, CHIRPS, IMERG และ GSMaP ตั้งแต่ปี 2000  
 คีย์หลัก: `dataset_id, cell_id, date` · คีย์นอก: `dataset_id` → `source.source_id`, `cell_id` → `grid_cell.cell_id`
 
 | คอลัมน์ | ชนิด | คำอธิบาย |
 |---|---|---|
-| `dataset_id` | ข้อความ | ชุดข้อมูล: era5_land | chirps |
+| `dataset_id` | ข้อความ | ชุดข้อมูล: era5_land | chirps | imerg | gsmap |
 | `cell_id` | จำนวนเต็ม | เซลล์กริด th025 |
 | `date` | วันที่ | วันที่ (UTC 00–24) |
 | `t2m_mean` | ทศนิยม 32 บิต | อุณหภูมิเฉลี่ยรายวัน (°C) |
@@ -594,6 +650,8 @@ python scripts/build_db_docs.py                # สร้าง ER และพ
 | `noaa_nomads` | [NOAA NOMADS GRIB filter](https://nomads.ncep.noaa.gov/) | NOAA NCEP | model_grib | สาธารณสมบัติ (US Gov) |
 | `era5_land` | [ERA5-Land](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land) | ECMWF / Copernicus Climate Change Service | reanalysis | Copernicus licence (อ้างอิงแหล่งที่มา) |
 | `chirps` | [CHIRPS v2.0](https://www.chc.ucsb.edu/data/chirps) | UCSB Climate Hazards Center | satellite | CC BY 4.0 |
+| `imerg` | [NASA GPM IMERG V07 Final](https://gpm.nasa.gov/data/imerg) | NASA Goddard Space Flight Center | satellite | สาธารณสมบัติ (NASA) |
+| `gsmap` | [JAXA GSMaP (v8 operational / v6 reanalysis)](https://sharaku.eorc.jaxa.jp/GSMaP/) | JAXA Earth Observation Research Center | satellite | ใช้ได้โดยอ้างอิงแหล่งที่มา (JAXA) |
 | `heatsafe` | พยากรณ์ภัยความร้อนรายเขต (weather_heatsafe.py) | Consolidated Weather | model_api | CC BY 4.0 |
 <!-- DICT_END -->
 

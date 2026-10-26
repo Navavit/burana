@@ -170,11 +170,34 @@ TABLES = {
                  ("ob", pa.float32(), "ค่าตรวจวัด"),
                  ("ev_fc", pa.bool_(), "พยากรณ์ว่าเกิดเหตุการณ์ (ฝน ≥ เกณฑ์)"),
                  ("ev_ob", pa.bool_(), "เกิดเหตุการณ์จริง")]},
+    "forecast_prevrun": {
+        "kind": "fact", "desc": "พยากรณ์ย้อนหลังรายชั่วโมง ณ สถานี จาก Open-Meteo Previous Runs: ค่าที่ทายไว้ล่วงหน้า N วัน (ใช้ศึกษาความถูกต้องย้อนหลังเมื่อยังไม่ได้เก็บรอบพยากรณ์จริง)",
+        "pk": ["model_id", "site_id", "valid_time", "var_id", "lead_day"],
+        "fk": {"model_id": "model.model_id", "site_id": "site.site_id", "var_id": "variable.var_id"},
+        "cols": [("model_id", pa.string(), "แบบจำลอง"),
+                 ("site_id", pa.string(), "จุด"),
+                 ("valid_time", TS, "เวลาที่พยากรณ์ (UTC; สิ้นสุดชั่วโมงสะสม)"),
+                 ("lead_day", pa.int8(), "N ของ previous_dayN: มาจากรอบที่ออกก่อนเวลาที่พยากรณ์ 24N–24N+23 ชม. โดยประมาณ"),
+                 ("var_id", pa.string(), "ตัวแปร"),
+                 ("value", pa.float32(), "ค่า (หน่วยตาม variable)")]},
+    "observation_qc": {
+        "kind": "fact", "desc": "ธงการควบคุมคุณภาพของค่าตรวจวัด (เฉพาะค่าที่ถูกตั้งธง) — ใช้คัดออกก่อนตรวจสอบความถูกต้อง",
+        "pk": ["site_id", "time", "var_id", "period_h", "source_id", "flag"],
+        "fk": {"site_id": "site.site_id", "var_id": "variable.var_id", "source_id": "source.source_id"},
+        "cols": [("site_id", pa.string(), "จุด"),
+                 ("time", TS, "เวลาสิ้นสุดช่วงตรวจวัด (UTC)"),
+                 ("var_id", pa.string(), "ตัวแปร"),
+                 ("period_h", pa.int16(), "ช่วงสะสม (ชม.)"),
+                 ("source_id", pa.string(), "แหล่งข้อมูลของค่าตรวจวัด"),
+                 ("flag", pa.string(), "range | stuck | isolated_high | false_zero"),
+                 ("value", pa.float32(), "ค่าที่ถูกตั้งธง"),
+                 ("ref", pa.float32(), "ค่าอ้างอิง (มัธยฐานของสถานีข้างเคียง)"),
+                 ("n_ref", pa.int16(), "จำนวนสถานีข้างเคียงที่ใช้")]},
     "reanalysis_daily": {
-        "kind": "fact", "desc": "ข้อมูลย้อนหลังเชิงกริดรายวัน (วัน UTC) ณ จุดศูนย์กลางเซลล์ th025: ERA5-Land และ CHIRPS ตั้งแต่ปี 2000",
+        "kind": "fact", "desc": "ข้อมูลย้อนหลังเชิงกริดรายวัน (วัน UTC) ณ จุดศูนย์กลางเซลล์ th025: ERA5-Land, CHIRPS, IMERG และ GSMaP ตั้งแต่ปี 2000",
         "pk": ["dataset_id", "cell_id", "date"],
         "fk": {"dataset_id": "source.source_id", "cell_id": "grid_cell.cell_id"},
-        "cols": [("dataset_id", pa.string(), "ชุดข้อมูล: era5_land | chirps"),
+        "cols": [("dataset_id", pa.string(), "ชุดข้อมูล: era5_land | chirps | imerg | gsmap"),
                  ("cell_id", pa.int32(), "เซลล์กริด th025"),
                  ("date", pa.date32(), "วันที่ (UTC 00–24)"),
                  ("t2m_mean", pa.float32(), "อุณหภูมิเฉลี่ยรายวัน (°C)"),
@@ -189,7 +212,7 @@ TABLES = {
 # ตารางข้อเท็จจริงแต่ละตาราง: คอลัมน์เวลาที่ใช้แบ่งไฟล์รายเดือน
 PARTITION_TIME = {"forecast_grid": "init_time", "forecast_point": "init_time", "forecast_district": "issued",
                   "observation": "time", "forecast_hii": "init_time", "verification_pair": "valid_time",
-                  "reanalysis_daily": "date"}
+                  "reanalysis_daily": "date", "forecast_prevrun": "valid_time", "observation_qc": "time"}
 
 
 def arrow_schema(table):

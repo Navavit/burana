@@ -39,6 +39,12 @@ SOURCES = [
      "0.1° · ดึงย้อนหลังผ่าน Google Earth Engine (ECMWF/ERA5_LAND/DAILY_AGGR) ปรับปรุงรายเดือนผ่าน Open-Meteo · ล่าช้า ~5–7 วัน"),
     ("chirps", "CHIRPS v2.0", "UCSB Climate Hazards Center", "satellite", "https://www.chc.ucsb.edu/data/chirps", "CC BY 4.0", "รายวัน",
      "ฝนจากดาวเทียมร่วมกับสถานี 0.05° · ดึงย้อนหลังผ่าน Google Earth Engine ปรับปรุงรายเดือนจากไฟล์ของ CHC · ล่าช้า ~3 สัปดาห์"),
+    ("imerg", "NASA GPM IMERG V07 Final", "NASA Goddard Space Flight Center", "satellite",
+     "https://gpm.nasa.gov/data/imerg", "สาธารณสมบัติ (NASA)", "รายวัน (รวมจากราย 30 นาที)",
+     "ฝนจากดาวเทียมหลายดวง ปรับเทียบกับเครื่องวัดฝนรายเดือน 0.1° · ตั้งแต่ มิ.ย. 2543 · ล่าช้า ~3.5 เดือน · ดึงผ่าน Google Earth Engine"),
+    ("gsmap", "JAXA GSMaP (v8 operational / v6 reanalysis)", "JAXA Earth Observation Research Center", "satellite",
+     "https://sharaku.eorc.jaxa.jp/GSMaP/", "ใช้ได้โดยอ้างอิงแหล่งที่มา (JAXA)", "รายวัน (รวมจากรายชั่วโมง)",
+     "ฝนจากดาวเทียมหลายดวง 0.1° ปรับแก้ด้วยเครื่องวัดฝน (gauge-adjusted) · ล่าช้า ~3 วัน · ดึงผ่าน Google Earth Engine"),
     ("heatsafe", "พยากรณ์ภัยความร้อนรายเขต (weather_heatsafe.py)", "Consolidated Weather", "model_api", "", "CC BY 4.0", "รายวัน",
      "ปรับแก้ความเอนเอียงจากผลทดสอบย้อนหลัง"),
 ]
@@ -97,6 +103,12 @@ def models():
          "grid_km": 3, "members": 1, "source_id": "hii_image"},
         {"model_id": "median", "name": "ค่ามัธยฐานหลายแบบจำลอง", "agency": "Consolidated Weather", "kind": "det",
          "physics": "Physics", "grid_km": None, "members": None, "source_id": "openmeteo"},
+        # ใช้เฉพาะพยากรณ์ย้อนหลัง (Previous Runs มีชุด 0.25° ย้อนถึง 2567)
+        {"model_id": "ecmwf_ifs025", "name": "ECMWF IFS 0.25°", "agency": "ECMWF", "kind": "det", "physics": "Physics",
+         "grid_km": 28, "members": 1, "source_id": "openmeteo"},
+        # เลิกใช้แล้ว แต่ยังมีแถวในตารางข้อเท็จจริง
+        {"model_id": "ens_icon_seamless", "name": "DWD ICON-EPS", "agency": "DWD", "kind": "ens", "physics": "Physics",
+         "grid_km": 28, "members": 40, "source_id": "openmeteo"},
     ]
     return pd.DataFrame(rows)
 

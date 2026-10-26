@@ -42,7 +42,7 @@ DATASETS = [
      "update": "วันละครั้ง (เก็บค่าของเมื่อวาน)", "latency": "~1 วัน",
      "storage": "branch data: obs/twday/ · ฐานข้อมูล: observation (source_id = thaiwater, period_h = 24)",
      "use": "การตรวจสอบฝนรายวันที่โทรมาตรทุกเครื่อง แยกเขตเมือง/ชานเมือง/ชนบท",
-     "limits": "ค่าผิดปกติ (< 0 หรือ ≥ 1,000 มม.) ถูกตัดออก · ไม่มีการควบคุมคุณภาพเพิ่มเติมจากต้นทาง", "live": "twday"},
+     "limits": "ค่าผิดปกติ (< 0 หรือ ≥ 1,000 มม.) ถูกตัดออก · ตั้งธงคุณภาพรายวันด้วยการเทียบสถานีข้างเคียง (ตาราง observation_qc: range, stuck, isolated_high, false_zero)", "live": "twday"},
     {"id": "tw_check", "group": "obs", "name": "ฝนรายชั่วโมงและสะสม 24 ชม. ณ โทรมาตรจุดตรวจ (ThaiWater)",
      "provider": "สถาบันสารสนเทศทรัพยากรน้ำ (สสน.)", "url": "https://www.thaiwater.net/", "license": "เปิดเผยตามเงื่อนไขของ สสน.",
      "variables": "ฝนรายชั่วโมง (มม.), ฝนสะสม 24 ชม. ล่าสุด (มม.)",
@@ -97,6 +97,21 @@ DATASETS = [
      "native": "รายวัน", "update": "รายเดือน: 3 เดือนล่าสุด (ไฟล์ GeoTIFF ของ CHC) · ย้อนหลังผ่าน Google Earth Engine",
      "latency": "~3 สัปดาห์", "storage": "ฐานข้อมูล: release db-history → reanalysis_daily (dataset_id = chirps)",
      "use": "ฝนเชิงพื้นที่ระยะยาว", "limits": "ประเมินฝนตกหนักระยะสั้นต่ำกว่าความเป็นจริง", "live": "chirps"},
+    {"id": "imerg", "group": "hist", "name": "IMERG V07 ฝนรายวันจากดาวเทียม",
+     "provider": "NASA Goddard Space Flight Center (GPM)", "url": "https://gpm.nasa.gov/data/imerg", "license": "สาธารณสมบัติ (NASA)",
+     "variables": "ฝนรายวัน (มม.) รวมจากราย 30 นาที (ชุด Final ปรับเทียบกับเครื่องวัดฝนรายเดือน)",
+     "spatial": "ค่า ณ จุดศูนย์กลางเซลล์กริด th025 (ความละเอียดต้นทาง 0.1°)", "native": "รายวัน (วัน UTC = 07:00–07:00 น.)",
+     "update": "ดึงผ่าน Google Earth Engine ในเครื่องผู้ดูแล (ไม่อัตโนมัติ)", "latency": "~3.5 เดือน (ชุด Final)",
+     "storage": "ฐานข้อมูล: release db-history → reanalysis_daily (dataset_id = imerg)",
+     "use": "ค่าอ้างอิงเชิงกริดสำหรับ Fractions Skill Score และการควบคุมคุณภาพโทรมาตร", "limits": "ประเมินฝนพาความร้อนระยะสั้นคลาดเคลื่อนได้", "live": "imerg"},
+    {"id": "gsmap", "group": "hist", "name": "GSMaP ฝนรายวันจากดาวเทียม (ปรับแก้ด้วยเครื่องวัดฝน)",
+     "provider": "JAXA Earth Observation Research Center", "url": "https://sharaku.eorc.jaxa.jp/GSMaP/", "license": "ใช้ได้โดยอ้างอิงแหล่งที่มา (JAXA)",
+     "variables": "ฝนรายวัน (มม.) รวมจากรายชั่วโมง (hourlyPrecipRateGC)",
+     "spatial": "ค่า ณ จุดศูนย์กลางเซลล์กริด th025 (ความละเอียดต้นทาง 0.1°)", "native": "รายวัน (วัน UTC = 07:00–07:00 น.)",
+     "update": "ดึงผ่าน Google Earth Engine ในเครื่องผู้ดูแล (ไม่อัตโนมัติ)", "latency": "~3 วัน (v8 operational)",
+     "storage": "ฐานข้อมูล: release db-history → reanalysis_daily (dataset_id = gsmap)",
+     "use": "ค่าอ้างอิงเชิงกริดช่วงล่าสุด (IMERG Final ยังไม่ออก) สำหรับ FSS และการควบคุมคุณภาพ",
+     "limits": "v6 reanalysis (2543–ก.พ. 2557) และ v8 operational (มี.ค. 2557–) ใช้อัลกอริทึมต่างกัน", "live": "gsmap"},
     {"id": "om_locations", "group": "fc", "name": "พยากรณ์รายชั่วโมงหลายแบบจำลอง ณ ตำแหน่งหลัก",
      "provider": "Open-Meteo (รวบรวมจาก ECMWF, NOAA, DWD, ECCC, JMA, Météo-France, UK Met Office, CMA)", "url": "https://open-meteo.com/",
      "license": "CC BY 4.0 (ใช้งานไม่เชิงพาณิชย์)",
@@ -115,8 +130,10 @@ DATASETS = [
      "provider": "Open-Meteo", "url": "https://open-meteo.com/en/docs/previous-runs-api", "license": "CC BY 4.0 (ใช้งานไม่เชิงพาณิชย์)",
      "variables": "ฝนและอุณหภูมิที่พยากรณ์ไว้ล่วงหน้า 1–7 วัน", "spatial": "สถานีอุตุนิยมวิทยาทุกแห่ง และโทรมาตรทุกเครื่อง",
      "native": "รายชั่วโมง", "update": "วันละครั้ง (หลังกรมอุตุนิยมวิทยาสรุปผล 07:00 น.)", "latency": "1 วัน",
-     "storage": "branch data: verification/pairs/ · ฐานข้อมูล: verification_pair (obs_source = national, national3h)",
-     "use": "การตรวจสอบความถูกต้องระดับประเทศ ล่วงหน้า 24/72/168 ชม.", "limits": "", "live": "prevruns"},
+     "storage": "branch data: verification/pairs/ · ฐานข้อมูล: verification_pair (obs_source = national, national3h) · "
+                "ย้อนหลัง ก.ค. 2567 – ก.ย. 2569 ณ สถานีกรมอุตุฯ: release db-prevruns → forecast_prevrun",
+     "use": "การตรวจสอบความถูกต้องระดับประเทศ ล่วงหน้า 24/72/168 ชม. · ชุดย้อนหลังใช้ศึกษาความถูกต้องหลายฤดูกาล (9 แบบจำลอง, ล่วงหน้า 1/2/3/5/7 วัน)",
+     "limits": "previous_dayN ต่อกันจากหลายรอบ (ไม่ใช่ Day N จากรอบเดียว) · ชุดย้อนหลังดึงทีละเดือนภายในโควตาฟรี (~4,000 หน่วย/วัน) จนครบ", "live": "prevruns"},
     {"id": "province_fc", "group": "fc", "name": "พยากรณ์รายจังหวัด 7 วัน",
      "provider": "Open-Meteo (ECMWF IFS, ECMWF AIFS, NOAA GFS, DWD ICON)", "url": "https://open-meteo.com/", "license": "CC BY 4.0 (ใช้งานไม่เชิงพาณิชย์)",
      "variables": "อุณหภูมิสูงสุด/ต่ำสุด, ดัชนีความร้อนสูงสุด, ฝนรวม, ความน่าจะเป็นฝน (สัดส่วนแบบจำลอง)",
@@ -174,6 +191,8 @@ SOURCE_UPDATE = {
     "ghcnh": ("NCEI ปรับปรุงไฟล์รายปีทุกวัน", "~3 วัน"),
     "gsod": ("หยุดปรับปรุง ส.ค. 2568", "–"),
     "era5land": ("ECMWF/Copernicus ปรับปรุงรายวัน (ERA5T) · ชุด DAILY_AGGR ใน Google Earth Engine ปรับปรุงตามมา", "~5 วัน (ECMWF) · ~1–2 สัปดาห์ (GEE)"),
+    "imerg": ("ชุด Final ออกรายเดือน", "~3.5 เดือน"),
+    "gsmap": ("รายชั่วโมง (v8 operational)", "~3 วัน"),
     "chirps": ("ชุด final ออกรายเดือน (ประมาณสัปดาห์ที่ 3 ของเดือนถัดไป) · ชุด preliminary ออกทุก 5 วัน (ไม่ได้ใช้)", "~3 สัปดาห์"),
     "om_locations": ("แต่ละแบบจำลองออกรอบใหม่ตามรอบการประมวลผลของศูนย์พยากรณ์ (ดูตารางแบบจำลองด้านล่าง) · Open-Meteo นำเข้าเมื่อศูนย์เผยแพร่", "ดูตารางแบบจำลอง"),
     "om_stations": ("ตามรอบของแต่ละแบบจำลอง (ดูตารางแบบจำลอง)", "ดูตารางแบบจำลอง"),
@@ -307,6 +326,9 @@ def live_stats(archive, man):
     live["gsod"] = {**_span(man, "observation", "db-history", "gsod")}
     live["era5_land"] = {**_span(man, "reanalysis_daily", "db-history", "era5_land")}
     live["chirps"] = {**_span(man, "reanalysis_daily", "db-history", "chirps")}
+    live["imerg"] = {**_span(man, "reanalysis_daily", "db-history", "imerg")}
+    live["gsmap"] = {**_span(man, "reanalysis_daily", "db-history", "gsmap")}
+    live["prevruns_db"] = {**_span(man, "forecast_prevrun", "db-prevruns")}
     live["grid"] = {**_span(man, "forecast_grid"), "cells": 957}
     # วันแรกที่ระบบมีข้อมูล (ความครอบคลุมเชิงเวลาของแอป) สำหรับชุดที่ไม่มีในสถิติข้างต้น
     runs0 = _first_run(a, [{"lat": la, "lon": lo} for la, lo, *_ in core.resolve_locations()] + loc)
@@ -319,7 +341,7 @@ def live_stats(archive, man):
         first = json.loads(obs[0].read_text(encoding="utf-8"))
         live["user"].update({"first": first.get("obs_time", "")[:10],
                              "latest": json.loads(obs[-1].read_text(encoding="utf-8")).get("obs_time", "")[:16]})
-    live["prevruns"] = {"first": min(filter(None, [live["tmdday"].get("first"), _first_file(a, "verification/gauges")]), default=None)}
+    live["prevruns"] = {"first": min(filter(None, [live["tmdday"].get("first"), _first_file(a, "verification/gauges"), live["prevruns_db"].get("from")]), default=None)}
     live["pairs"]["first"] = min(filter(None, [live["tmd3h"].get("first"), live["tmdday"].get("first")]), default=live["pairs"]["first"])
     return live, pts
 

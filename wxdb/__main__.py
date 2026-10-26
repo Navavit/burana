@@ -7,6 +7,8 @@
   python -m wxdb points                        พยากรณ์ ณ สถานีอุตุนิยมวิทยาทุกแห่งจากทุกแบบจำลองใน Open-Meteo
   python -m wxdb history [--years 2000-2025]    ค่าตรวจวัดรายชั่วโมงย้อนหลังจาก NOAA GHCNh (ค่าเริ่มต้น: ปีปัจจุบัน)
   python -m wxdb history --source gsod --years 2000-2025   ค่ารายวันจาก NOAA GSOD (รวมกับสถานีของกรมอุตุนิยมวิทยา)
+  python -m wxdb prevruns [--budget 4000]       พยากรณ์ย้อนหลัง (Open-Meteo Previous Runs) ณ สถานีกรมอุตุฯ ทำต่อจากที่ค้าง
+  python -m wxdb qc [--days 10]                 ควบคุมคุณภาพฝนรายวันของโทรมาตร (เทียบสถานีข้างเคียง)
   python -m wxdb reanalysis [--source gee --years 2000-2026]
                                                ERA5-Land และ CHIRPS รายวัน ณ เซลล์ th025 (ค่าเริ่มต้น: ปรับปรุง 3 เดือนล่าสุด)
   python -m wxdb pack [--month YYYY-MM]        รวมไฟล์รายวันของเดือน (ค่าเริ่มต้น: เดือนก่อน) เป็นไฟล์รายเดือน
@@ -22,7 +24,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from . import catalog, etl, grid, gsod, history, points, reanalysis, schema, store
+from . import catalog, etl, grid, gsod, history, points, prevruns, qc, reanalysis, schema, store
 
 
 def _load_dim(name, workdir):
@@ -192,7 +194,7 @@ def cmd_reanalysis(a):
         if a.source == "gee":
             y0, _, y1 = (a.years or str(now.year)).partition("-")
             for y in range(int(y0), int(y1 or y0) + 1):
-                for ds in ("era5_land", "chirps"):
+                for ds in a.datasets:
                     for m in range(1, 13):
                         if pd.Timestamp(y, m, 1) > now:
                             break
@@ -279,6 +281,61 @@ def cmd_prune(a):
     print(f"ลบ runs รายวัน {removed} โฟลเดอร์ (เก่ากว่า {cutoff:%Y-%m-%d} และอยู่ในฐานข้อมูลแล้ว)")
 
 
+def cmd_prevruns(a):
+    """พยากรณ์ย้อนหลังจาก Open-Meteo Previous Runs ณ สถานีของกรมอุตุนิยมวิทยา → release db-prevruns
+    ทำงานทีละ (แบบจำลอง, เดือน) จนใช้โควตาครบ --budget หน่วย แล้วหยุด (รอบถัดไปทำต่อจากที่ค้าง)"""
+    store.ensure_release(prevruns.RELEASE, "ฐานข้อมูล: พยากรณ์ย้อนหลัง (Previous Runs)",
+                         "พยากรณ์ย้อนหลังรายชั่วโมง ณ สถานีของกรมอุตุนิยมวิทยา จาก Open-Meteo Previous Runs "
+                         f"({prevruns.START} ถึง {prevruns.END}) — โครงสร้างและวิธีใช้: docs/DATABASE.md")
+    man = store.load_manifest()
+    jobs = prevruns.todo(man)
+    if not jobs:
+        print("Previous Runs: ครบทุกแบบจำลองและเดือนแล้ว")
+        return
+    with tempfile.TemporaryDirectory() as d:
+        site = _load_dim("site", d)
+        st = site[site.site_id.str.startswith("tmd:") & site.lat.notna()].drop_duplicates("site_id").reset_index(drop=True)
+        used, done = 0, 0
+        for model, month in jobs:
+            days = pd.Period(month, "M").days_in_month
+            need = prevruns.cost(len(st), days) + 1
+            if used + need > a.budget:
+                break
+            used += 1
+            if not prevruns.available(model, month):
+                man.setdefault("prevrun_unavailable", []).append(f"{model}_{month}")
+                store.save_manifest(man)
+                print(f"{model} {month}: ไม่มีข้อมูลใน Previous Runs")
+                continue
+            df = prevruns.model_month(model, month, st)
+            used += need - 1
+            if not len(df):
+                continue
+            path = store.write_parquet(schema.conform(df, "forecast_prevrun"), Path(d) / f"forecast_prevrun__{model}_{month}.parquet",
+                                       sort=schema.TABLES["forecast_prevrun"]["pk"])
+            store.upload(prevruns.RELEASE, [path])
+            store.register(man, prevruns.RELEASE, [(path, "forecast_prevrun")])
+            store.save_manifest(man)
+            done += 1
+            print(f"{model} {month}: {len(df):,} แถว · {df.site_id.nunique()} สถานี · {path.stat().st_size / 1e6:.1f} MB", flush=True)
+        print(f"Previous Runs: เสร็จ {done} งาน · ใช้โควตา ~{used:,} หน่วย · ค้าง {len(prevruns.todo(man)):,} งาน")
+
+
+def cmd_qc(a):
+    """ควบคุมคุณภาพฝนรายวันของโทรมาตร ThaiWater (เทียบสถานีข้างเคียง) → ตาราง observation_qc"""
+    now = pd.Timestamp.now(tz="UTC").tz_localize(None).normalize()
+    days = pd.date_range(a.start or now - pd.Timedelta(days=a.days), a.end or now - pd.Timedelta(days=1), freq="D")
+    from . import connect
+    con = connect(tables=["observation", "site"], months=sorted({f"{x:%Y-%m}" for x in days} | {f"{days[0] - pd.Timedelta(days=7):%Y-%m}"}))
+    flags = qc.rain_daily(con, days[0], days[-1] + pd.Timedelta(days=1))
+    print(f"QC ฝนรายวัน {days[0]:%Y-%m-%d} – {days[-1]:%Y-%m-%d}: ตั้งธง {len(flags):,} ค่า "
+          + " · ".join(f"{k} {v:,}" for k, v in flags.flag.value_counts().items()) if len(flags) else "")
+    if len(flags) and not a.dry_run:
+        with tempfile.TemporaryDirectory() as d:
+            parts = [("observation_qc", m, p) for m, p in store.write_fact(flags, "observation_qc", d, suffix="qc")]
+            store.publish_facts(parts)
+
+
 def cmd_status(a):
     man = store.load_manifest()
     print(f"ปรับปรุง {man.get('generated', '–')}")
@@ -311,6 +368,8 @@ def main(argv=None):
     rp = s.add_parser("reanalysis")
     rp.add_argument("--source", choices=["gee", "monthly"], default="monthly")
     rp.add_argument("--years", help="สำหรับ --source gee เช่น 2000-2026")
+    rp.add_argument("--datasets", nargs="+", default=["era5_land", "chirps"], choices=["era5_land", "chirps", "imerg", "gsmap"],
+                    help="สำหรับ --source gee (imerg, gsmap ดึงได้เฉพาะผ่าน GEE)")
     rp.set_defaults(fn=cmd_reanalysis)
     k = s.add_parser("pack")
     k.add_argument("--month")
@@ -320,6 +379,15 @@ def main(argv=None):
     r.add_argument("--archive", default="archive")
     r.add_argument("--keep-days", type=int, default=35)
     r.set_defaults(fn=cmd_prune)
+    pr = s.add_parser("prevruns")
+    pr.add_argument("--budget", type=int, default=4000, help="โควตา Open-Meteo สูงสุดที่ใช้ในรอบนี้ (หน่วย)")
+    pr.set_defaults(fn=cmd_prevruns)
+    q = s.add_parser("qc")
+    q.add_argument("--days", type=int, default=10)
+    q.add_argument("--from", dest="start")
+    q.add_argument("--to", dest="end")
+    q.add_argument("--dry-run", action="store_true")
+    q.set_defaults(fn=cmd_qc)
     s.add_parser("status").set_defaults(fn=cmd_status)
     a = p.parse_args(argv)
     a.fn(a)

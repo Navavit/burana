@@ -140,6 +140,18 @@ def load_manifest(fresh=None):
 
 
 def save_manifest(man):
+    """บันทึก manifest โดยนำการเปลี่ยนแปลงของรอบนี้ (man["_ops"]) ไปใช้กับฉบับล่าสุดบน release ก่อน
+    เพื่อไม่ให้งานที่รันนาน (เช่น ดึงข้อมูลย้อนหลังในเครื่อง) เขียนทับไฟล์ที่งานอื่นลงทะเบียนไว้ระหว่างนั้น"""
+    ops = man.pop("_ops", [])
+    if shutil.which("gh") and os.environ.get("WXDB_READONLY") != "1":
+        latest = load_manifest(fresh=True)
+        for tag, names, entries in ops:
+            latest["files"] = [f for f in latest["files"] if not (f["release"] == tag and f["name"] in names)] + entries
+        for k, v in man.items():                        # รายการสะสมอื่น (etl_days, prevrun_unavailable): รวมกัน
+            if isinstance(v, list) and k != "files":
+                latest[k] = sorted(set(latest.get(k, [])) | set(v))
+        man.clear()
+        man.update(latest)
     man["generated"] = pd.Timestamp.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     man["repo"], man["base_url"] = REPO, BASE_URL
     man["files"] = sorted(man["files"], key=lambda f: (f["table"], f["release"], f["name"]))
@@ -159,9 +171,9 @@ def save_manifest(man):
 def register(man, tag, paths_tables, drop_names=()):
     """เพิ่ม/แทนที่รายการไฟล์ใน manifest (ยังไม่บันทึก)"""
     names = {Path(p).name for p, _ in paths_tables} | set(drop_names)
-    man["files"] = [f for f in man["files"] if not (f["release"] == tag and f["name"] in names)]
-    for p, table in paths_tables:
-        man["files"].append({**file_stats(p, table), "release": tag})
+    entries = [{**file_stats(p, table), "release": tag} for p, table in paths_tables]
+    man["files"] = [f for f in man["files"] if not (f["release"] == tag and f["name"] in names)] + entries
+    man.setdefault("_ops", []).append((tag, names, entries))
     return man
 
 

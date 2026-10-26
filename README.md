@@ -26,7 +26,7 @@ flowchart LR
     S3["Open-Meteo<br/>แบบจำลอง + ensemble"]
     S5["ECMWF Open Data<br/>NOAA NOMADS (GRIB)"]
     S7["ผู้ใช้<br/>รายงานฝน"]
-    S8["NOAA GHCNh/GSOD · ERA5-Land · CHIRPS<br/>ข้อมูลย้อนหลัง 2000–"]
+    S8["NOAA GHCNh/GSOD · ERA5-Land · CHIRPS<br/>IMERG · GSMaP · Previous Runs<br/>ข้อมูลย้อนหลัง"]
   end
   subgraph HOURLY["ทุกชั่วโมง · collect.yml"]
     direction TB
@@ -36,7 +36,7 @@ flowchart LR
   end
   subgraph DB["รายวัน/รายเดือน · database.yml"]
     direction TB
-    D1["wxdb grid · points · etl · pack<br/>history · reanalysis"]
+    D1["wxdb grid · etl · qc · pack<br/>history · reanalysis · prevruns"]
     R1[("GitHub Releases<br/>ฐานข้อมูล Parquet")]
   end
   U1["DuckDB / pandas<br/>HEAT-SAFE · งานวิจัยอื่น"]
@@ -54,6 +54,9 @@ flowchart LR
 | แปลงคลังระยะสั้นเข้าฐานข้อมูล | วันละครั้ง | `python -m wxdb etl` | ตารางค่าตรวจวัด พยากรณ์ และคู่ตรวจสอบ |
 | พยากรณ์ ณ สถานีอุตุนิยมวิทยาทุกแห่ง (จุดตรวจทั่วประเทศ, อุณหภูมิและฝนของทุกแบบจำลอง) | ทุก 6 ชั่วโมง | `weather_verify.collect_national` | branch `data` → ตาราง `forecast_point` |
 | ค่าตรวจวัดย้อนหลัง (NOAA GHCNh รายชั่วโมง, GSOD รายวัน) และ ERA5-Land/CHIRPS รายวัน ตั้งแต่ 2000 | รายเดือน | `python -m wxdb history`, `reanalysis` | ตาราง `observation`, `reanalysis_daily` |
+| ควบคุมคุณภาพฝนรายวันของโทรมาตร (เทียบสถานีข้างเคียง) | วันละ 2 รอบ | `python -m wxdb qc` | ตาราง `observation_qc` |
+| พยากรณ์ย้อนหลัง ณ สถานีกรมอุตุฯ (Open-Meteo Previous Runs, ก.ค. 2024 – ก.ย. 2026) | วันละ 2 รอบ จนครบ (≤ 2,000 หน่วยโควตา/รอบ) | `python -m wxdb prevruns` | ตาราง `forecast_prevrun` |
+| ฝนจากดาวเทียม IMERG / GSMaP รายวัน (2000–) | ดึงในเครื่องผู้ดูแล (GEE) | `python -m wxdb reanalysis --source gee --datasets imerg gsmap` | ตาราง `reanalysis_daily` |
 | รวมไฟล์รายเดือนและลดขนาดคลังระยะสั้น | รายเดือน | `python -m wxdb pack`, `prune` | `<table>__YYYY-MM.parquet` |
 
 ## 2. โครงสร้างฐานข้อมูล (ER diagram)
@@ -128,6 +131,21 @@ erDiagram
         timestamp init_time PK
         string scheme PK
     }
+    forecast_prevrun {
+        string model_id PK
+        string site_id PK
+        timestamp valid_time PK
+        int lead_day PK
+        string var_id PK
+    }
+    observation_qc {
+        string site_id PK
+        timestamp time PK
+        string var_id PK
+        int period_h PK
+        string source_id PK
+        string flag PK
+    }
     reanalysis_daily {
         string dataset_id PK
         int cell_id PK
@@ -139,21 +157,27 @@ erDiagram
     model ||--o{ forecast_district : "model_id"
     model ||--o{ forecast_grid : "model_id"
     model ||--o{ forecast_point : "model_id"
+    model ||--o{ forecast_prevrun : "model_id"
     model ||--o{ run : "model_id"
     model ||--o{ verification_pair : "model_id"
     run ||--o{ forecast_grid : "(model_id, init_time)"
     site ||--o{ forecast_district : "site_id"
     site ||--o{ forecast_hii : "site_id"
     site ||--o{ forecast_point : "site_id"
+    site ||--o{ forecast_prevrun : "site_id"
     site ||--o{ observation : "site_id"
+    site ||--o{ observation_qc : "site_id"
     site ||--o{ verification_pair : "site_id"
     source ||--o{ model : "source_id"
     source ||--o{ observation : "source_id"
+    source ||--o{ observation_qc : "source_id"
     source ||--o{ reanalysis_daily : "dataset_id"
     source ||--o{ run : "source_id"
     source ||--o{ site : "source_id"
     variable ||--o{ forecast_point : "var_id"
+    variable ||--o{ forecast_prevrun : "var_id"
     variable ||--o{ observation : "var_id"
+    variable ||--o{ observation_qc : "var_id"
     variable ||--o{ verification_pair : "var_id"
 ```
 <!-- ER_END -->
@@ -176,6 +200,8 @@ con.sql("SELECT * FROM observation WHERE site_id = 'tmd:48455' AND var_id = 't2m
 | ค่าตรวจวัดย้อนหลัง | NOAA GHCNh 46–160 สถานีในประเทศไทย (2000–ปัจจุบัน) | รายชั่วโมง |
 | ค่าตรวจวัดรายวันย้อนหลัง | NOAA GSOD 66–133 สถานีของกรมอุตุนิยมวิทยา (2000–ส.ค. 2025) รวมในจุดเดียวกับสถานีของกรม (`tmd:<WMO>`) | รายวัน |
 | ข้อมูลเชิงกริดย้อนหลัง | ERA5-Land (0.1°) และ CHIRPS v2.0 (0.05°) ณ จุดศูนย์กลางเซลล์ th025 (2000–ปัจจุบัน) | รายวัน |
+| ฝนจากดาวเทียม | NASA IMERG V07 Final และ JAXA GSMaP (ปรับแก้ด้วยเครื่องวัดฝน) 0.1° ณ จุดศูนย์กลางเซลล์ th025 (2000–ปัจจุบัน) | รายวัน |
+| พยากรณ์ย้อนหลัง | Open-Meteo Previous Runs 9 แบบจำลอง ณ สถานีกรมอุตุฯ ล่วงหน้า 1/2/3/5/7 วัน (ก.ค. 2024 – ก.ย. 2026) | รายชั่วโมง |
 
 รายละเอียดหลักการของแต่ละแบบจำลองอยู่ใน [docs/MODELS.md](docs/MODELS.md)
 
@@ -198,7 +224,6 @@ Consolidated_Weather/
 ├── wxdb/                     # ฐานข้อมูลระยะยาว: schema, catalog, etl, grid, store, CLI
 ├── web/                      # หน้าเว็บ (index.html, app.js, style.css) — GitHub Pages
 ├── resources/                # gauges.csv, bkk_districts.csv, th_provinces.csv, grid_th025.csv, heatsafe_calibration.json
-├── analysis/                 # การวิเคราะห์ย้อนหลังสำหรับบทความวิจัย (GSOD/ISD 2024–2025)
 ├── scripts/                  # build_grid.py, build_provinces.py, build_db_docs.py, สคริปต์จัดการ branch data
 ├── .github/workflows/        # collect.yml (รายชั่วโมง), database.yml (ฐานข้อมูล), location.yml, observe.yml
 ├── config.json               # ตำแหน่งและค่ากำหนด (เผยแพร่)
@@ -257,6 +282,7 @@ pip install -r requirements-notebook.txt        # notebook
 
 ### 6.4 การประเมินความถูกต้อง
 คะแนนตามแนวทาง WMO ได้แก่ MAE, RMSE, ความเอนเอียง, POD, FAR, CSI, frequency bias และ Brier score แยกตามแบบจำลอง ระยะล่วงหน้า และเครือข่ายตรวจวัด รายละเอียดอยู่ใน [docs/MODELS.md § 5](docs/MODELS.md#5-การวัดความแม่นยำ-verification) คู่พยากรณ์–ค่าตรวจวัดทั้งหมดจัดเก็บในตาราง `verification_pair` เพื่อคำนวณคะแนนใหม่ด้วยเกณฑ์อื่นได้
+
 
 ## 7. ข้อจำกัดและเงื่อนไขการใช้ข้อมูล
 - Open-Meteo API แบบไม่มีค่าใช้จ่ายใช้ได้เฉพาะงานที่ไม่ใช่เชิงพาณิชย์ (~10,000 คำขอ/วัน) ต้องแสดงที่มา "Weather data by Open-Meteo.com" (CC BY 4.0)

@@ -3,6 +3,9 @@
 ชุดข้อมูล
   era5_land  ECMWF ERA5-Land (0.1°) รายวันตามวัน UTC: อุณหภูมิเฉลี่ย/สูงสุด/ต่ำสุด, จุดน้ำค้างเฉลี่ย, ฝนรวม, รังสีคลื่นสั้นขาลงรวม
   chirps     CHIRPS v2.0 (0.05°) ฝนรายวัน (ดาวเทียมร่วมกับสถานี)
+  imerg      NASA GPM IMERG V07 Final (0.1°) ฝนรายวัน = ผลรวมราย 30 นาที (มิ.ย. 2543 –, ล่าช้า ~3.5 เดือน)
+  gsmap      JAXA GSMaP (0.1°) ฝนรายวัน = ผลรวมรายชั่วโมง ปรับแก้ด้วยเครื่องวัดฝน: v6 reanalysis (มี.ค. 2543 – ก.พ. 2557)
+             และ v8 operational (มี.ค. 2557 –, ล่าช้า ~3 วัน)
 
 ช่องทางการดึง (ให้ค่าเดียวกัน คือค่าของเซลล์ต้นทางที่ครอบจุดศูนย์กลางเซลล์ th025)
   gee        Google Earth Engine — ใช้ดึงย้อนหลังครั้งแรก (ต้องมีบัญชี GEE และตัวแปรแวดล้อม GEE_PROJECT ในเครื่อง)
@@ -55,6 +58,8 @@ def gee_month(dataset, y, m, cells):
     pts = ee.FeatureCollection([ee.Feature(ee.Geometry.Point(float(lo), float(la)), {"cell_id": int(c)})
                                 for c, la, lo in zip(cells.cell_id, cells.lat, cells.lon)])
     start = ee.Date.fromYMD(y, m, 1)
+    if dataset in SAT:
+        return _gee_sat(ee, dataset, y, m, pts)
     if dataset == "era5_land":
         col = ee.ImageCollection("ECMWF/ERA5_LAND/DAILY_AGGR").filterDate(start, start.advance(1, "month")).select(list(ERA5_BANDS))
         scale = 11132
@@ -89,6 +94,45 @@ def gee_month(dataset, y, m, cells):
         d["ssrd"] = d.ssrd / 1e6
     else:
         d = d.rename(columns={"precipitation": "precip"})
+    return _finish(d, dataset, "gee")
+
+
+# ฝนจากดาวเทียม: (คอลเลกชัน, แบนด์ อัตราฝน มม./ชม., ชั่วโมงต่อภาพ, ช่วงวันที่ที่ใช้คอลเลกชันนั้น)
+SAT = {"imerg": [("NASA/GPM_L3/IMERG_V07", "precipitation", 0.5, "2000-06-01", None)],
+       "gsmap": [("JAXA/GPM_L3/GSMaP/v6/reanalysis", "hourlyPrecipRateGC", 1, "2000-03-01", "2014-03-01"),
+                 ("JAXA/GPM_L3/GSMaP/v8/operational", "hourlyPrecipRateGC", 1, "2014-03-01", None)]}
+
+
+def _gee_sat(ee, dataset, y, m, pts):
+    """ฝนรายวัน (วัน UTC) = ผลรวมของอัตราฝน × ชั่วโมงต่อภาพ ณ จุดศูนย์กลางเซลล์ (ค่าของพิกเซล 0.1° ที่ครอบจุด)"""
+    start = pd.Timestamp(y, m, 1)
+    days = pd.date_range(start, start + pd.offsets.MonthEnd(0), freq="D")
+    imgs = []
+    for d in days:
+        src = [c for c in SAT[dataset] if pd.Timestamp(c[3]) <= d and (c[4] is None or d < pd.Timestamp(c[4]))]
+        if not src:
+            continue
+        cid, band, hours, *_ = src[0]
+        day = ee.Date(d.strftime("%Y-%m-%d"))
+        col = ee.ImageCollection(cid).filterDate(day, day.advance(1, "day")).select(band)
+        imgs.append(ee.Image(ee.Algorithms.If(col.size().gt(0), col.sum().multiply(hours),
+                                              ee.Image.constant(-9999).toFloat())).rename("p").set("system:index", d.strftime("%Y%m%d")))
+    if not imgs:
+        return pd.DataFrame()
+    for i in range(4):
+        try:
+            feats = ee.ImageCollection(imgs).toBands().reduceRegions(pts, ee.Reducer.first(), 11132).getInfo()["features"]
+            break
+        except Exception:                               # noqa: BLE001 — GEE ขัดข้องชั่วคราว
+            if i == 3:
+                raise
+            time.sleep(20 * (i + 1))
+    rows = [(f["properties"]["cell_id"], k.split("_", 1)[0], v) for f in feats for k, v in f["properties"].items() if k != "cell_id"]
+    d = pd.DataFrame(rows, columns=["cell_id", "day", "precip"])
+    d = d[d.precip.notna() & (d.precip > -9000)]
+    if d.empty:
+        return pd.DataFrame()
+    d["date"] = pd.to_datetime(d.day, format="%Y%m%d")
     return _finish(d, dataset, "gee")
 
 
