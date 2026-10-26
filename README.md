@@ -293,6 +293,20 @@ pip install earthengine-api                     # (เฉพาะในเค�
 คะแนนตามแนวทาง WMO ได้แก่ MAE, RMSE, ความเอนเอียง, POD, FAR, CSI, frequency bias และ Brier score แยกตามแบบจำลอง ระยะล่วงหน้า และเครือข่ายตรวจวัด รายละเอียดอยู่ใน [docs/MODELS.md § 5](docs/MODELS.md#5-การวัดความแม่นยำ-verification) คู่พยากรณ์–ค่าตรวจวัดทั้งหมดจัดเก็บในตาราง `verification_pair` เพื่อคำนวณคะแนนใหม่ด้วยเกณฑ์อื่นได้
 
 
+### 6.5 การใช้ฐานข้อมูลจากโครงการอื่น
+งานประยุกต์ติดตั้งแพ็กเกจ `wxdb` (เฉพาะส่วนอ่านข้อมูลและฟังก์ชันตรวจสอบความถูกต้อง) โดยระบุเวอร์ชันด้วย tag เพื่อให้ทำซ้ำผลได้
+แล้วอ่านข้อมูลจาก GitHub Releases โดยตรง ไม่ต้องมีสำเนาของ repository นี้ในเครื่อง
+
+```bash
+pip install "wxdb[verify] @ git+https://github.com/Navavit/consolidated-weather@wxdb-v1.0.0"
+```
+
+```python
+import wxdb
+con = wxdb.connect(tables=["site", "observation"])          # หรือ months=["2026-10"] เพื่อจำกัดเดือน
+con.sql("SELECT * FROM observation_best WHERE site_id = 'tmd:48455' AND var_id = 'tmax'").df()
+```
+
 ## 7. ข้อจำกัดและเงื่อนไขการใช้ข้อมูล
 - Open-Meteo API แบบไม่มีค่าใช้จ่ายใช้ได้เฉพาะงานที่ไม่ใช่เชิงพาณิชย์ (~10,000 คำขอ/วัน) ต้องแสดงที่มา "Weather data by Open-Meteo.com" (CC BY 4.0)
 - ECMWF Open Data อยู่ภายใต้ CC BY 4.0 ส่วนข้อมูลของ NOAA เป็นสาธารณสมบัติ และข้อมูลของกรมอุตุนิยมวิทยาและ สสน. อยู่ภายใต้เงื่อนไขของหน่วยงาน (ตาราง `source` ในฐานข้อมูล)
