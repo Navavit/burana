@@ -27,39 +27,25 @@
 flowchart LR
   subgraph SRC["แหล่งข้อมูล"]
     direction TB
-    S1["กรมอุตุนิยมวิทยา<br/>สถานี · TMD WRF"]
-    S2["ThaiWater (สสน.)<br/>โทรมาตร · HII WRF-ROMS"]
-    S3["Open-Meteo<br/>แบบจำลอง + ensemble"]
-    S4["Air4Thai · ผู้ใช้<br/>คุณภาพอากาศ · รายงานฝน"]
-    S5["ECMWF Open Data<br/>NOAA NOMADS (GRIB)"]
-    S8["ย้อนหลัง 2000–: GHCNh · GSOD · METAR (IEM)<br/>ERA5-Land · CHIRPS · IMERG · GSMaP<br/>Previous Runs 2024–"]
+    S1["ค่าตรวจวัดในประเทศ<br/>กรมอุตุนิยมวิทยา · ThaiWater · Air4Thai<br/>รายงานฝนจากผู้ใช้"]
+    S2["แบบจำลองพยากรณ์<br/>ระดับโลก · ensemble · ระดับภูมิภาค"]
+    S3["ข้อมูลย้อนหลังตั้งแต่ 2000<br/>สถานี NOAA/สนามบิน · reanalysis · ดาวเทียม"]
   end
-  subgraph HOURLY["ทุกชั่วโมง · collect.yml"]
+  subgraph SYS["Consolidated Weather"]
     direction TB
-    C1["collector.py<br/>ดึง · ตรวจสอบ · สรุป"]
-    C2[("branch data<br/>คลังระยะสั้น")]
-    C3["GitHub Pages<br/>หน้าเว็บ + ข้อมูลและแหล่งที่มา"]
+    C1["รวบรวมอัตโนมัติ<br/>ทุกชั่วโมง"]
+    C2["ควบคุมคุณภาพ<br/>และตรวจสอบความถูกต้อง"]
+    C3[("ฐานข้อมูลระยะยาว<br/>ทั้งประเทศไทย")]
+    C1 --> C2 --> C3
   end
-  subgraph DB["รายวัน/รายเดือน · database.yml"]
+  subgraph OUT["การใช้ประโยชน์"]
     direction TB
-    D1["wxdb grid · etl · qc · pack · reconcile<br/>history · reanalysis · prevruns"]
-    R1[("GitHub Releases<br/>ฐานข้อมูล Parquet")]
+    O1["หน้าเว็บ<br/>พยากรณ์ · ความแม่นของแบบจำลอง<br/>ข้อมูลและแหล่งที่มา"]
+    O2["งานวิจัย<br/>เปรียบเทียบแบบจำลองพยากรณ์"]
+    O3["งานประยุกต์<br/>เช่น เตือนภัยความร้อน กทม."]
   end
-  subgraph ANA["วิเคราะห์ · analysis/"]
-    direction TB
-    A2["heat_forecast_backtest.ipynb<br/>ทดสอบย้อนหลังที่สถานีใน กทม."]
-  end
-  subgraph APP["งานประยุกต์ (repository แยก)"]
-    U1["HEAT-SAFE Bangkok<br/>pip install wxdb (ตรึง tag)"]
-    U2["โครงการอื่น"]
-  end
-  S1 & S2 & S3 & S4 --> C1 --> C2 & C3
-  S5 & S8 --> D1
-  C2 --> D1 --> R1
-  R1 --> A1 & A2
-  A2 -- "resources/heatsafe_calibration.json" --> C1
-  R1 --> U1 & U2
-  A2 -- "analysis/heat_backtest (สไลด์)" --> U1
+  S1 & S2 & S3 --> C1
+  C3 --> O1 & O2 & O3
 ```
 
 | ขั้นตอน | ความถี่ | โปรแกรม | ผลลัพธ์ |
