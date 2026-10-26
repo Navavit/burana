@@ -25,7 +25,7 @@ function coverage(d) {
   const c = {
     tmd3h: s.count && `${num(s.count)} สถานี`, tmdday: s.count && `${num(s.count)} สถานี`, twday: s.count && `${num(s.count)} เครื่อง`,
     tw_check: s.count && `${num(s.active)} เครื่องที่รายงานอยู่ (จาก ${num(s.count)})`, air4thai: s.count && `${num(s.count)} สถานี`,
-    user: `${num(s.count)} รายงาน`, ghcnh: s.count && `${num(s.count)} สถานี`, era5land: "957 เซลล์ (0.25°)", chirps: "957 เซลล์ (0.25°)",
+    user: `${num(s.count)} รายงาน`, ghcnh: s.count && `${num(s.count)} สถานี`, gsod: "66–133 สถานี (ตามปี)", era5land: "957 เซลล์ (0.25°)", chirps: "957 เซลล์ (0.25°)",
     om_locations: s.count && `${num(s.count)} จุด · ${num(s.models)} แบบจำลอง + ${num(s.ensembles)} ensemble`,
     om_stations: s.count && `${num(s.count)} สถานี · ${num(s.provinces)} จังหวัด · ${num(s.models)} แบบจำลอง`,
     province_fc: "77 จังหวัด · 4 แบบจำลอง", heatsafe: `50 เขต${s.models ? ` · ${s.models} แบบจำลอง` : ""}`, grid: "957 เซลล์ · 3 แบบจำลอง",
@@ -62,7 +62,7 @@ async function main() {
   $("cards").replaceChildren(...[
     ["ชุดข้อมูล", ds.length, "รายการ"],
     ["สถานีตรวจวัดปัจจุบัน", num(nStations), `TMD ${num(st("tmd3h").count)} · ThaiWater ${num(st("twday").count)} · Air4Thai ${num(st("air4thai").count)}`],
-    ["สถานีย้อนหลัง (GHCNh)", num(st("ghcnh").count), "2016–ปัจจุบัน รายชั่วโมง"],
+    ["สถานีย้อนหลัง (GHCNh)", num(st("ghcnh").count), "2543–ปัจจุบัน รายชั่วโมง"],
     ["แบบจำลองพยากรณ์", C.models.length, `+ ensemble ${C.ensembles.length} ระบบ`],
     ["ฐานข้อมูล", size(DB.total_bytes), `${num(DB.total_rows)} แถว`],
   ].map(([k, v, s]) => el("div", { class: "d-card" }, el("div", { class: "k" }, k), el("div", { class: "v" }, v), el("div", { class: "s" }, s))));

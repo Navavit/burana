@@ -26,7 +26,7 @@ flowchart LR
     S3["Open-Meteo<br/>แบบจำลอง + ensemble"]
     S5["ECMWF Open Data<br/>NOAA NOMADS (GRIB)"]
     S7["ผู้ใช้<br/>รายงานฝน"]
-    S8["NOAA GHCNh · ERA5-Land · CHIRPS<br/>ข้อมูลย้อนหลัง 2016–"]
+    S8["NOAA GHCNh/GSOD · ERA5-Land · CHIRPS<br/>ข้อมูลย้อนหลัง 2000–"]
   end
   subgraph HOURLY["ทุกชั่วโมง · collect.yml"]
     direction TB
@@ -53,7 +53,7 @@ flowchart LR
 | พยากรณ์กริดทั่วประเทศ (0.25°) | วันละ 2 รอบ | `python -m wxdb grid` (`database.yml`) | ตาราง `forecast_grid` |
 | แปลงคลังระยะสั้นเข้าฐานข้อมูล | วันละครั้ง | `python -m wxdb etl` | ตารางค่าตรวจวัด พยากรณ์ และคู่ตรวจสอบ |
 | พยากรณ์ ณ สถานีอุตุนิยมวิทยาทุกแห่ง (จุดตรวจทั่วประเทศ, อุณหภูมิและฝนของทุกแบบจำลอง) | ทุก 6 ชั่วโมง | `weather_verify.collect_national` | branch `data` → ตาราง `forecast_point` |
-| ค่าตรวจวัดรายชั่วโมงย้อนหลัง (NOAA GHCNh) และ ERA5-Land/CHIRPS รายวัน ตั้งแต่ 2016 | รายเดือน | `python -m wxdb history`, `reanalysis` | ตาราง `observation`, `reanalysis_daily` |
+| ค่าตรวจวัดย้อนหลัง (NOAA GHCNh รายชั่วโมง, GSOD รายวัน) และ ERA5-Land/CHIRPS รายวัน ตั้งแต่ 2000 | รายเดือน | `python -m wxdb history`, `reanalysis` | ตาราง `observation`, `reanalysis_daily` |
 | รวมไฟล์รายเดือนและลดขนาดคลังระยะสั้น | รายเดือน | `python -m wxdb pack`, `prune` | `<table>__YYYY-MM.parquet` |
 
 ## 2. โครงสร้างฐานข้อมูล (ER diagram)
@@ -173,8 +173,9 @@ con.sql("SELECT * FROM observation WHERE site_id = 'tmd:48455' AND var_id = 't2m
 | แบบจำลองระดับภูมิภาค | TMD WRF 2 กม. (ต้องมี token) · HII WRF-ROMS 3 กม. (อ่านจากภาพ) · Google Weather ~5 กม. (ต้องมี key) | รายชั่วโมง/รายวัน |
 | Ensemble | ECMWF ENS, ECMWF AIFS ENS, NOAA GEFS, NOAA AIGEFS, DWD ICON-EPS, UKMO MOGREPS-G, ECCC GEPS | ความน่าจะเป็นฝน |
 | ค่าตรวจวัด | กรมอุตุนิยมวิทยา (ราย 3 ชม., รายวัน) · ThaiWater (รายชั่วโมง, 24 ชม.) · Air4Thai (PM2.5, PM10, O3, CO, NO2, SO2, AQI) · รายงานผู้ใช้ | ตามสถานี |
-| ค่าตรวจวัดย้อนหลัง | NOAA GHCNh ~160 สถานีในประเทศไทย (2016–ปัจจุบัน) | รายชั่วโมง |
-| ข้อมูลเชิงกริดย้อนหลัง | ERA5-Land (0.1°) และ CHIRPS v2.0 (0.05°) ณ จุดศูนย์กลางเซลล์ th025 (2016–ปัจจุบัน) | รายวัน |
+| ค่าตรวจวัดย้อนหลัง | NOAA GHCNh 46–160 สถานีในประเทศไทย (2000–ปัจจุบัน) | รายชั่วโมง |
+| ค่าตรวจวัดรายวันย้อนหลัง | NOAA GSOD 66–133 สถานีของกรมอุตุนิยมวิทยา (2000–ส.ค. 2025) รวมในจุดเดียวกับสถานีของกรม (`tmd:<WMO>`) | รายวัน |
+| ข้อมูลเชิงกริดย้อนหลัง | ERA5-Land (0.1°) และ CHIRPS v2.0 (0.05°) ณ จุดศูนย์กลางเซลล์ th025 (2000–ปัจจุบัน) | รายวัน |
 
 รายละเอียดหลักการของแต่ละแบบจำลองอยู่ใน [docs/MODELS.md](docs/MODELS.md)
 

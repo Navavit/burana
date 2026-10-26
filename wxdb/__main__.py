@@ -5,8 +5,9 @@
                                                แปลงคลังรายชั่วโมงของวัน (ค่าเริ่มต้น: 2 วันก่อน) เข้าฐานข้อมูล
   python -m wxdb grid [--days 3]               ดึงพยากรณ์กริดรอบที่ยังขาดในช่วง N วันล่าสุด
   python -m wxdb points                        พยากรณ์ ณ สถานีอุตุนิยมวิทยาทุกแห่งจากทุกแบบจำลองใน Open-Meteo
-  python -m wxdb history [--years 2016-2025]    ค่าตรวจวัดรายชั่วโมงย้อนหลังจาก NOAA GHCNh (ค่าเริ่มต้น: ปีปัจจุบัน)
-  python -m wxdb reanalysis [--source gee --years 2016-2026]
+  python -m wxdb history [--years 2000-2025]    ค่าตรวจวัดรายชั่วโมงย้อนหลังจาก NOAA GHCNh (ค่าเริ่มต้น: ปีปัจจุบัน)
+  python -m wxdb history --source gsod --years 2000-2025   ค่ารายวันจาก NOAA GSOD (รวมกับสถานีของกรมอุตุนิยมวิทยา)
+  python -m wxdb reanalysis [--source gee --years 2000-2026]
                                                ERA5-Land และ CHIRPS รายวัน ณ เซลล์ th025 (ค่าเริ่มต้น: ปรับปรุง 3 เดือนล่าสุด)
   python -m wxdb pack [--month YYYY-MM]        รวมไฟล์รายวันของเดือน (ค่าเริ่มต้น: เดือนก่อน) เป็นไฟล์รายเดือน
   python -m wxdb prune --archive archive [--keep-days 35]
@@ -21,7 +22,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from . import catalog, etl, grid, history, points, reanalysis, schema, store
+from . import catalog, etl, grid, gsod, history, points, reanalysis, schema, store
 
 
 def _load_dim(name, workdir):
@@ -142,25 +143,33 @@ def cmd_history(a):
         years = list(range(int(y0), int(y1 or y0) + 1))
     else:                                               # ค่าเริ่มต้น (รายเดือน): ปีปัจจุบัน และปีก่อนหน้าในเดือนมกราคม
         years = [now.year - 1, now.year] if now.month == 1 else [now.year]
-    st = history.stations()
+    if a.source == "gsod":
+        years = [y for y in years if y <= gsod.LAST_YEAR]
+    st = history.stations() if a.source == "ghcnh" else None
     store.ensure_release(history.RELEASE, "ฐานข้อมูล: ค่าตรวจวัดย้อนหลัง",
-                         "ค่าตรวจวัดรายชั่วโมงของสถานีในประเทศไทยจาก NOAA GHCNh (2016–ปัจจุบัน) และชุดข้อมูลย้อนหลังอื่น "
+                         "ค่าตรวจวัดรายชั่วโมงของสถานีในประเทศไทยจาก NOAA GHCNh และรายวันจาก NOAA GSOD (2543–ปัจจุบัน) และชุดข้อมูลย้อนหลังอื่น "
                          "ไฟล์ของปีปัจจุบันถูกแทนที่ทุกเดือน — โครงสร้างและวิธีใช้: docs/DATABASE.md")
     man = store.load_manifest()
     with tempfile.TemporaryDirectory() as d:
+        new_sites = [history.site_rows(st)] if st is not None else []
         for y in years:
-            df = history.year(st, y)
+            if a.source == "gsod":
+                df, ss = gsod.year(y)
+                new_sites.append(ss)
+            else:
+                df = history.year(st, y)
             if not len(df):
                 print(f"{y}: ไม่มีข้อมูล")
                 continue
-            path = store.write_parquet(schema.conform(df, "observation"), Path(d) / f"observation__ghcnh_{y}.parquet",
+            path = store.write_parquet(schema.conform(df, "observation"), Path(d) / f"observation__{a.source}_{y}.parquet",
                                        sort=schema.TABLES["observation"]["pk"])
             store.upload(history.RELEASE, [path])
             store.register(man, history.RELEASE, [(path, "observation")])
             store.save_manifest(man)
             print(f"{y}: {len(df):,} แถว · {df.site_id.nunique()} สถานี · {path.stat().st_size / 1e6:.1f} MB")
         sites = _load_dim("site", d)
-        store.publish_dims({"site": etl.merge_sites(sites, [history.site_rows(st).assign(seen=pd.NaT)])}, d, man)
+        new = pd.concat(new_sites, ignore_index=True).drop_duplicates("site_id", keep="last")
+        store.publish_dims({"site": etl.merge_sites(sites, [new.assign(seen=pd.NaT)])}, d, man)
 
 
 def _year_file(tag, name, d):
@@ -296,11 +305,12 @@ def main(argv=None):
     g.set_defaults(fn=cmd_grid)
     s.add_parser("points").set_defaults(fn=cmd_points)
     hp = s.add_parser("history")
-    hp.add_argument("--years", help="เช่น 2016-2025 หรือ 2026 (ค่าเริ่มต้น: ปีปัจจุบัน)")
+    hp.add_argument("--years", help="เช่น 2000-2025 หรือ 2026 (ค่าเริ่มต้น: ปีปัจจุบัน)")
+    hp.add_argument("--source", choices=["ghcnh", "gsod"], default="ghcnh", help="gsod: ค่ารายวัน 2543–2568 (หยุดปรับปรุง ส.ค. 2568)")
     hp.set_defaults(fn=cmd_history)
     rp = s.add_parser("reanalysis")
     rp.add_argument("--source", choices=["gee", "monthly"], default="monthly")
-    rp.add_argument("--years", help="สำหรับ --source gee เช่น 2016-2026")
+    rp.add_argument("--years", help="สำหรับ --source gee เช่น 2000-2026")
     rp.set_defaults(fn=cmd_reanalysis)
     k = s.add_parser("pack")
     k.add_argument("--month")

@@ -71,8 +71,17 @@ DATASETS = [
      "spatial": "สถานี synoptic และ METAR ในประเทศไทย", "native": "รายชั่วโมง (บางสถานีราย 3 ชม.)",
      "update": "รายเดือน (วันที่ 3) แทนที่ไฟล์ของปีปัจจุบัน", "latency": "~3 วัน",
      "storage": "ฐานข้อมูล: release db-history → observation__ghcnh_<ปี>.parquet (source_id = noaa_ghcnh)",
-     "use": "อนุกรมเวลาต่อเนื่อง 2016–ปัจจุบัน สำหรับภูมิอากาศวิทยา การทดสอบย้อนหลัง และการปรับแก้ความเอนเอียง",
-     "limits": "ใช้เฉพาะค่าที่ผ่านการควบคุมคุณภาพ · NOAA ใช้ GHCNh แทน ISD/GSOD ซึ่งหยุดปรับปรุง ส.ค. 2568", "live": "ghcnh"},
+     "use": "อนุกรมเวลาต่อเนื่อง 2543–ปัจจุบัน สำหรับภูมิอากาศวิทยา การทดสอบย้อนหลัง และการปรับแก้ความเอนเอียง",
+     "limits": "ใช้เฉพาะค่าที่ผ่านการควบคุมคุณภาพ · NOAA ใช้ GHCNh แทน ISD/GSOD ซึ่งหยุดปรับปรุง ส.ค. 2568 · ปี 2543 มี 46 สถานี (เพิ่มเป็น ~160 สถานีในปัจจุบัน)", "live": "ghcnh"},
+    {"id": "gsod", "group": "hist", "name": "ค่าสรุปรายวันย้อนหลัง NOAA GSOD (สถานีกรมอุตุนิยมวิทยา)",
+     "provider": "NOAA National Centers for Environmental Information", "url": "https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.ncdc:C00516",
+     "license": "สาธารณสมบัติ (U.S. Government)",
+     "variables": "อุณหภูมิเฉลี่ย/สูงสุด/ต่ำสุด, จุดน้ำค้างเฉลี่ย, ความกดอากาศระดับน้ำทะเล, ความเร็วลมเฉลี่ย, ลมกระโชก, ทัศนวิสัย, ฝน 24 ชม.",
+     "spatial": "สถานี synoptic ของกรมอุตุนิยมวิทยา (บันทึกในจุดเดียวกับสถานีของกรม: tmd:<WMO>)", "native": "รายวัน (07:00–07:00 น.)",
+     "update": "ไม่ปรับปรุงแล้ว (ดึงครั้งเดียว)", "latency": "หยุดปรับปรุง ส.ค. 2568",
+     "storage": "ฐานข้อมูล: release db-history → observation__gsod_<ปี>.parquet (source_id = noaa_gsod)",
+     "use": "ต่ออนุกรมรายวันของสถานีกรมอุตุนิยมวิทยาย้อนหลังถึง 2543 (มีสถานีมากกว่า GHCNh ในช่วงแรก)",
+     "limits": "ฝนรายวัน: วันที่ไม่มีรายงานฝน (flag I) ถือเป็น 0 มม. ตามการตรวจกับ CHIRPS · ค่าเฉลี่ยต้องมาจาก ≥ 4 การตรวจวัด", "live": "gsod"},
     {"id": "era5land", "group": "hist", "name": "ERA5-Land รายวัน",
      "provider": "ECMWF / Copernicus Climate Change Service", "url": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land",
      "license": "Copernicus licence (อ้างอิงแหล่งที่มา)",
@@ -163,6 +172,7 @@ SOURCE_UPDATE = {
     "air4thai": ("รายชั่วโมง", "~20–60 นาที"),
     "user": ("ตามเหตุการณ์", "ทันที"),
     "ghcnh": ("NCEI ปรับปรุงไฟล์รายปีทุกวัน", "~3 วัน"),
+    "gsod": ("หยุดปรับปรุง ส.ค. 2568", "–"),
     "era5land": ("ECMWF/Copernicus ปรับปรุงรายวัน (ERA5T) · ชุด DAILY_AGGR ใน Google Earth Engine ปรับปรุงตามมา", "~5 วัน (ECMWF) · ~1–2 สัปดาห์ (GEE)"),
     "chirps": ("ชุด final ออกรายเดือน (ประมาณสัปดาห์ที่ 3 ของเดือนถัดไป) · ชุด preliminary ออกทุก 5 วัน (ไม่ได้ใช้)", "~3 สัปดาห์"),
     "om_locations": ("แต่ละแบบจำลองออกรอบใหม่ตามรอบการประมวลผลของศูนย์พยากรณ์ (ดูตารางแบบจำลองด้านล่าง) · Open-Meteo นำเข้าเมื่อศูนย์เผยแพร่", "ดูตารางแบบจำลอง"),
@@ -294,6 +304,7 @@ def live_stats(archive, man):
     pairs = sorted((a / "verification" / "pairs").glob("*.csv.gz"))
     live["pairs"] = {"first": pairs[0].name[:7] if pairs else None, "files": len(pairs)}
     live["ghcnh"] = {**_span(man, "observation", "db-history", "ghcnh")}
+    live["gsod"] = {**_span(man, "observation", "db-history", "gsod")}
     live["era5_land"] = {**_span(man, "reanalysis_daily", "db-history", "era5_land")}
     live["chirps"] = {**_span(man, "reanalysis_daily", "db-history", "chirps")}
     live["grid"] = {**_span(man, "forecast_grid"), "cells": 957}

@@ -171,7 +171,7 @@ TABLES = {
                  ("ev_fc", pa.bool_(), "พยากรณ์ว่าเกิดเหตุการณ์ (ฝน ≥ เกณฑ์)"),
                  ("ev_ob", pa.bool_(), "เกิดเหตุการณ์จริง")]},
     "reanalysis_daily": {
-        "kind": "fact", "desc": "ข้อมูลย้อนหลังเชิงกริดรายวัน (วัน UTC) ณ จุดศูนย์กลางเซลล์ th025: ERA5-Land และ CHIRPS ตั้งแต่ปี 2016",
+        "kind": "fact", "desc": "ข้อมูลย้อนหลังเชิงกริดรายวัน (วัน UTC) ณ จุดศูนย์กลางเซลล์ th025: ERA5-Land และ CHIRPS ตั้งแต่ปี 2000",
         "pk": ["dataset_id", "cell_id", "date"],
         "fk": {"dataset_id": "source.source_id", "cell_id": "grid_cell.cell_id"},
         "cols": [("dataset_id", pa.string(), "ชุดข้อมูล: era5_land | chirps"),
