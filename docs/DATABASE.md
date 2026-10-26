@@ -25,8 +25,9 @@ flowchart LR
     S6["NOAA NOMADS<br/>GFS (GRIB)"]
     S7["ผู้ใช้<br/>รายงานฝน"]
     S8["Air4Thai (คพ.)<br/>คุณภาพอากาศ 173 สถานี"]
-    S9["NOAA GHCNh / GSOD<br/>สถานีรายชั่วโมง/รายวัน 2000–"]
-    S10["ERA5-Land · CHIRPS<br/>GEE · Open-Meteo · CHC"]
+    S9["NOAA GHCNh / GSOD · METAR (IEM)<br/>สถานีรายชั่วโมง/รายวัน 2000–"]
+    S10["ERA5-Land · CHIRPS · IMERG · GSMaP<br/>GEE · Open-Meteo · CHC"]
+    S11["Open-Meteo Previous Runs<br/>พยากรณ์ย้อนหลัง 2024–2026"]
   end
 
   subgraph HOURLY["รอบรายชั่วโมง · collect.yml"]
@@ -45,6 +46,9 @@ flowchart LR
     D3["wxdb pack<br/>รายเดือน"]
     D4["wxdb points<br/>สั่งรันเอง"]
     D5["wxdb history · reanalysis<br/>รายเดือน"]
+    D6["wxdb qc · reconcile<br/>วันละครั้ง"]
+    D7["wxdb prevruns<br/>วันละ 2 รอบจนครบ"]
+    R3[("Release db-prevruns<br/>พยากรณ์ย้อนหลัง")]
     R1[("Release db-YYYY-MM<br/>ตารางข้อเท็จจริง")]
     R2[("Release db-history<br/>ข้อมูลย้อนหลังรายปี")]
     R0[("Release db-catalog<br/>ตารางมิติ + manifest")]
@@ -55,20 +59,24 @@ flowchart LR
     R1 --> D3 --> R1
     D4 --> R1
     D5 --> R2
+    D7 --> R3
+    R1 --> D6 --> R1
   end
 
   subgraph USE["การใช้ข้อมูล"]
     direction TB
     U1["DuckDB / pandas<br/>wxdb.connect()"]
-    U2["HEAT-SAFE Bangkok<br/>และโครงการวิจัยอื่น"]
+    U2["งานประยุกต์ เช่น HEAT-SAFE Bangkok<br/>(pip install wxdb ตรึง tag)"]
   end
 
   S1 & S2 & S3 & S4 & S7 & S8 --> C1
   S5 & S6 --> D1
   S3 --> D4
   S9 & S10 --> D5
+  S11 --> D7
   C2 --> D2
-  R0 & R1 & R2 --> U1 --> U2
+  R0 & R1 & R2 & R3 --> U1 --> U2
+  U1 --> U3
 ```
 
 | ขั้นตอน | ความถี่ | อินพุต | เอาต์พุต | โปรแกรม |

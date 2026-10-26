@@ -30,25 +30,36 @@ flowchart LR
     S1["กรมอุตุนิยมวิทยา<br/>สถานี · TMD WRF"]
     S2["ThaiWater (สสน.)<br/>โทรมาตร · HII WRF-ROMS"]
     S3["Open-Meteo<br/>แบบจำลอง + ensemble"]
+    S4["Air4Thai · ผู้ใช้<br/>คุณภาพอากาศ · รายงานฝน"]
     S5["ECMWF Open Data<br/>NOAA NOMADS (GRIB)"]
-    S7["ผู้ใช้<br/>รายงานฝน"]
-    S8["NOAA GHCNh/GSOD · ERA5-Land · CHIRPS<br/>IMERG · GSMaP · Previous Runs<br/>ข้อมูลย้อนหลัง"]
+    S8["ย้อนหลัง 2000–: GHCNh · GSOD · METAR (IEM)<br/>ERA5-Land · CHIRPS · IMERG · GSMaP<br/>Previous Runs 2024–"]
   end
   subgraph HOURLY["ทุกชั่วโมง · collect.yml"]
     direction TB
     C1["collector.py<br/>ดึง · ตรวจสอบ · สรุป"]
     C2[("branch data<br/>คลังระยะสั้น")]
-    C3["GitHub Pages<br/>หน้าเว็บ"]
+    C3["GitHub Pages<br/>หน้าเว็บ + ข้อมูลและแหล่งที่มา"]
   end
   subgraph DB["รายวัน/รายเดือน · database.yml"]
     direction TB
-    D1["wxdb grid · etl · qc · pack<br/>history · reanalysis · prevruns"]
+    D1["wxdb grid · etl · qc · pack · reconcile<br/>history · reanalysis · prevruns"]
     R1[("GitHub Releases<br/>ฐานข้อมูล Parquet")]
   end
-  U1["DuckDB / pandas<br/>HEAT-SAFE · งานวิจัยอื่น"]
-  S1 & S2 & S3 & S7 --> C1 --> C2 & C3
+  subgraph ANA["วิเคราะห์ · analysis/"]
+    direction TB
+    A2["heat_forecast_backtest.ipynb<br/>ทดสอบย้อนหลังที่สถานีใน กทม."]
+  end
+  subgraph APP["งานประยุกต์ (repository แยก)"]
+    U1["HEAT-SAFE Bangkok<br/>pip install wxdb (ตรึง tag)"]
+    U2["โครงการอื่น"]
+  end
+  S1 & S2 & S3 & S4 --> C1 --> C2 & C3
   S5 & S8 --> D1
-  C2 --> D1 --> R1 --> U1
+  C2 --> D1 --> R1
+  R1 --> A1 & A2
+  A2 -- "resources/heatsafe_calibration.json" --> C1
+  R1 --> U1 & U2
+  A2 -- "analysis/heat_backtest (สไลด์)" --> U1
 ```
 
 | ขั้นตอน | ความถี่ | โปรแกรม | ผลลัพธ์ |
@@ -64,6 +75,8 @@ flowchart LR
 | พยากรณ์ย้อนหลัง ณ สถานีกรมอุตุฯ (Open-Meteo Previous Runs, ก.ค. 2024 – ก.ย. 2026) | วันละ 2 รอบ จนครบ (≤ 2,000 หน่วยโควตา/รอบ) | `python -m wxdb prevruns` | ตาราง `forecast_prevrun` |
 | ฝนจากดาวเทียม IMERG / GSMaP รายวัน (2000–) | ดึงในเครื่องผู้ดูแล (GEE) | `python -m wxdb reanalysis --source gee --datasets imerg gsmap` | ตาราง `reanalysis_daily` |
 | รวมไฟล์รายเดือนและลดขนาดคลังระยะสั้น | รายเดือน | `python -m wxdb pack`, `prune` | `<table>__YYYY-MM.parquet` |
+| ซ่อม manifest (ไฟล์ที่หลุดจากการบันทึกพร้อมกัน) | วันละครั้ง | `python -m wxdb reconcile` | `manifest.json` |
+| ทดสอบพยากรณ์ภัยความร้อนย้อนหลังที่สถานีใน กทม. → ค่าปรับแก้ของโมดูลภัยความร้อน | เมื่อมีข้อมูลฤดูร้อนใหม่ (สั่งรันเอง) | `analysis/heat_forecast_backtest.ipynb` | `resources/heatsafe_calibration.json`, `analysis/heat_backtest/` |
 
 ## 2. โครงสร้างฐานข้อมูล (ER diagram)
 
@@ -204,6 +217,7 @@ con.sql("SELECT * FROM observation WHERE site_id = 'tmd:48455' AND var_id = 't2m
 | Ensemble | ECMWF ENS, ECMWF AIFS ENS, NOAA GEFS, NOAA AIGEFS, UKMO MOGREPS-G, ECCC GEPS | ความน่าจะเป็นฝน |
 | ค่าตรวจวัด | กรมอุตุนิยมวิทยา (ราย 3 ชม., รายวัน) · ThaiWater (รายชั่วโมง, 24 ชม.) · Air4Thai (PM2.5, PM10, O3, CO, NO2, SO2, AQI) · รายงานผู้ใช้ | ตามสถานี |
 | ค่าตรวจวัดย้อนหลัง | NOAA GHCNh 46–160 สถานีในประเทศไทย (2000–ปัจจุบัน) | รายชั่วโมง |
+| ค่าตรวจวัดรายชั่วโมงของสนามบิน | METAR 39 สนามบินผ่าน Iowa Environmental Mesonet (2000–ปัจจุบัน, `site_id = metar:<ICAO>`) | รายชั่วโมง |
 | ค่าตรวจวัดรายวันย้อนหลัง | NOAA GSOD 66–133 สถานีของกรมอุตุนิยมวิทยา (2000–ส.ค. 2025) รวมในจุดเดียวกับสถานีของกรม (`tmd:<WMO>`) | รายวัน |
 | ข้อมูลเชิงกริดย้อนหลัง | ERA5-Land (0.1°) และ CHIRPS v2.0 (0.05°) ณ จุดศูนย์กลางเซลล์ th025 (2000–ปัจจุบัน) | รายวัน |
 | ฝนจากดาวเทียม | NASA IMERG V07 Final และ JAXA GSMaP (ปรับแก้ด้วยเครื่องวัดฝน) 0.1° ณ จุดศูนย์กลางเซลล์ th025 (2000–ปัจจุบัน) | รายวัน |
