@@ -48,7 +48,14 @@ def _finish(df, dataset, channel):
 
 # ---------------------------------------------------------------------------- Google Earth Engine (ย้อนหลัง)
 def _ee():
+    """เริ่ม Earth Engine ด้วย GEE_PROJECT จากตัวแปรแวดล้อม หรือไฟล์ .env ของ repository นี้ (ไม่ขึ้น GitHub)"""
     import ee
+    if "GEE_PROJECT" not in os.environ:
+        env = Path(__file__).resolve().parents[1] / ".env"
+        for line in env.read_text(encoding="utf-8").splitlines() if env.exists() else []:
+            k, _, v = line.partition("=")
+            if k.strip() == "GEE_PROJECT" and v.strip():
+                os.environ["GEE_PROJECT"] = v.strip().strip('"')
     ee.Initialize(project=os.environ["GEE_PROJECT"])
     return ee
 

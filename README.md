@@ -8,6 +8,12 @@
 
 ผลลัพธ์ทั้งหมดจัดเก็บใน **ฐานข้อมูลระยะยาวที่มีโครงสร้าง (wxdb)** ครอบคลุมทั้งประเทศ และเผยแพร่ผ่านหน้าเว็บ ระบบใช้บริการที่ไม่มีค่าใช้จ่ายทั้งหมด
 
+**บทบาทของ repository นี้:** เป็น**ระบบกลางสำหรับรวบรวมและจัดเก็บข้อมูลอากาศและแบบจำลองพยากรณ์**ของประเทศไทย ไม่ผูกกับโครงการใดโครงการหนึ่ง
+งานประยุกต์ (application) อ่านข้อมูลจากที่นี่ผ่าน `wxdb.connect()` หรือหน้าเว็บ แล้วพัฒนาต่อใน repository ของตนเอง เช่น
+**HEAT-SAFE Bangkok** (repository แยก) ซึ่งใช้ข้อมูลสถานีและพยากรณ์ไปประเมินและเตือนภัยความร้อน
+ข้อมูลเฉพาะของงานประยุกต์ (เช่น ดัชนีความเปราะบาง หรือพื้นที่เป้าหมาย) ไม่จัดเก็บใน repository นี้
+ยกเว้นโมดูลพยากรณ์ภัยความร้อนรายเขต (`weather_heatsafe.py`, แท็บ 🌡️ บนหน้าเว็บ) ซึ่งเป็นส่วนของ HEAT-SAFE ที่ฝากรันไว้ที่นี่ชั่วคราว
+
 🌐 **หน้าเว็บ** (ปรับปรุงทุกชั่วโมง): https://navavit.github.io/consolidated-weather/ ·
 🗄️ **ฐานข้อมูล:** [docs/DATABASE.md](docs/DATABASE.md) ·
 📖 **แบบจำลองและวิธีการ:** [docs/MODELS.md](docs/MODELS.md) ·
@@ -237,7 +243,10 @@ Consolidated_Weather/
 pip install -r requirements.txt                 # collector และหน้าเว็บ
 pip install -r requirements-db.txt              # ฐานข้อมูล (pyarrow, duckdb, eccodes, ecmwf-opendata)
 pip install -r requirements-notebook.txt        # notebook
+pip install earthengine-api                     # (เฉพาะในเครื่อง) ดึง ERA5-Land/CHIRPS/IMERG/GSMaP ย้อนหลังผ่าน Google Earth Engine
 ```
+
+การดึงผ่าน Google Earth Engine ต้องยืนยันตัวตน (`earthengine authenticate`) และระบุ project ID ในไฟล์ `.env` (คัดลอกจาก `.env.example`; ไฟล์นี้ไม่ขึ้น GitHub)
 
 ค่ากำหนดหลักใน `config.json`:
 
