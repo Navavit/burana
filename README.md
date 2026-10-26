@@ -2,7 +2,7 @@
 
 ระบบรวบรวมข้อมูลอุตุนิยมวิทยาแบบอัตโนมัติ ประกอบด้วยสามส่วน:
 
-1. **ข้อมูลพยากรณ์** จากแบบจำลองเชิงตัวเลขและแบบจำลองปัญญาประดิษฐ์ **12 ระบบ** ได้แก่ แบบจำลองโลก 10 ระบบ, TMD WRF 2 กม. และ Google Weather รวมถึง **ensemble 7 ระบบ** และ **HII WRF-ROMS** (สสน.) ระยะล่วงหน้า 3 ชั่วโมงถึง 7 วัน
+1. **ข้อมูลพยากรณ์** จากแบบจำลองเชิงตัวเลขและแบบจำลองปัญญาประดิษฐ์ **12 ระบบ** ได้แก่ แบบจำลองโลก 10 ระบบ, TMD WRF 2 กม. และ Google Weather รวมถึง **ensemble 6 ระบบ** และ **HII WRF-ROMS** (สสน.) ระยะล่วงหน้า 3 ชั่วโมงถึง 7 วัน
 2. **ค่าตรวจวัด** จากสถานีอุตุนิยมวิทยา ~122 แห่ง, โทรมาตร ThaiWater ~4,300 เครื่อง และรายงานฝนจากผู้ใช้
 3. **การตรวจสอบความถูกต้อง** (forecast verification) ตามแนวทางขององค์การอุตุนิยมวิทยาโลก (WMO)
 
@@ -171,7 +171,7 @@ con.sql("SELECT * FROM observation WHERE site_id = 'tmd:48455' AND var_id = 't2m
 | แบบจำลองโลก | ECMWF IFS 9 กม. · UKMO UM 10×15 · NOAA GFS 13 · DWD ICON 14 · CMA GRAPES 14 · ECCC GEM 16 · ECMWF AIFS 28 · NOAA AIGFS 28 · MF ARPEGE 28 · JMA GSM 55 กม. | รายชั่วโมง (ผ่าน Open-Meteo) |
 | แบบจำลองบนกริด th025 | ECMWF IFS, ECMWF AIFS, NOAA GFS (ไฟล์ GRIB ของศูนย์พยากรณ์) | 0.25° ราย 3–6 ชม. ถึง 168 ชม. |
 | แบบจำลองระดับภูมิภาค | TMD WRF 2 กม. (ต้องมี token) · HII WRF-ROMS 3 กม. (อ่านจากภาพ) · Google Weather ~5 กม. (ต้องมี key) | รายชั่วโมง/รายวัน |
-| Ensemble | ECMWF ENS, ECMWF AIFS ENS, NOAA GEFS, NOAA AIGEFS, DWD ICON-EPS, UKMO MOGREPS-G, ECCC GEPS | ความน่าจะเป็นฝน |
+| Ensemble | ECMWF ENS, ECMWF AIFS ENS, NOAA GEFS, NOAA AIGEFS, UKMO MOGREPS-G, ECCC GEPS | ความน่าจะเป็นฝน |
 | ค่าตรวจวัด | กรมอุตุนิยมวิทยา (ราย 3 ชม., รายวัน) · ThaiWater (รายชั่วโมง, 24 ชม.) · Air4Thai (PM2.5, PM10, O3, CO, NO2, SO2, AQI) · รายงานผู้ใช้ | ตามสถานี |
 | ค่าตรวจวัดย้อนหลัง | NOAA GHCNh 46–160 สถานีในประเทศไทย (2000–ปัจจุบัน) | รายชั่วโมง |
 | ค่าตรวจวัดรายวันย้อนหลัง | NOAA GSOD 66–133 สถานีของกรมอุตุนิยมวิทยา (2000–ส.ค. 2025) รวมในจุดเดียวกับสถานีของกรม (`tmd:<WMO>`) | รายวัน |

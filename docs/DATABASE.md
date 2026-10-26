@@ -19,7 +19,7 @@ flowchart LR
     direction TB
     S1["กรมอุตุนิยมวิทยา<br/>สถานีราย 3 ชม./รายวัน"]
     S2["ThaiWater (สสน.)<br/>โทรมาตรรายชั่วโมง/24 ชม."]
-    S3["Open-Meteo<br/>12 แบบจำลอง + 7 ensemble"]
+    S3["Open-Meteo<br/>12 แบบจำลอง + 6 ensemble"]
     S4["TMD WRF · Google Weather<br/>HII WRF-ROMS"]
     S5["ECMWF Open Data<br/>IFS · AIFS (GRIB)"]
     S6["NOAA NOMADS<br/>GFS (GRIB)"]

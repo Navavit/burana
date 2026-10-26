@@ -107,7 +107,7 @@ ENSEMBLE_MODELS = {
     "ecmwf_aifs025":             {"name": "ECMWF AIFS ENS", "members": 51, "grid_km": 28},
     "gfs025":                    {"name": "NOAA GEFS",      "members": 31, "grid_km": 28},
     "ncep_aigefs025":            {"name": "NOAA AIGEFS",    "members": 31, "grid_km": 28},
-    "icon_seamless":             {"name": "DWD ICON-EPS",   "members": 40, "grid_km": 28},
+    # DWD ICON-EPS (icon_seamless, 40 สมาชิก) ตัดออก 26 ต.ค. 2569: Open-Meteo หยุดปรับปรุงตั้งแต่รอบ 6 ต.ค. 2569
     "ukmo_global_ensemble_20km": {"name": "UKMO MOGREPS-G", "members": 18, "grid_km": 25},
     "gem_global":                {"name": "ECCC GEPS",      "members": 21, "grid_km": 55},
 }
@@ -139,7 +139,7 @@ RUN_META = {   # ชื่อโมเดลในแอป → ชื่อช�
     "UKMO UM": "ukmo_global_deterministic_10km", "CMA GRAPES": "cma_grapes_global", "KMA GDPS": "kma_gdps",
     "BOM ACCESS-G": "bom_access_global", "ECCC GEM": None,
     "ECMWF ENS": "ecmwf_ifs025_ensemble", "ECMWF AIFS ENS": "ecmwf_aifs025_single", "NOAA GEFS": "ncep_gefs025",
-    "NOAA AIGEFS": "ncep_aigfs025", "DWD ICON-EPS": "dwd_icon_eps", "UKMO MOGREPS-G": None, "ECCC GEPS": None,
+    "NOAA AIGEFS": "ncep_aigfs025", "UKMO MOGREPS-G": None, "ECCC GEPS": None,
 }
 RUN_CYCLE = {  # โมเดลที่ไม่มี metadata: รอบรันทุกกี่ชม. และความล่าช้าโดยประมาณ (ชม.) ใช้ประมาณรอบรัน
     "ECCC GEM": (12, 6), "ECCC GEPS": (12, 7), "UKMO MOGREPS-G": (6, 7), "TMD WRF": (12, 6),
