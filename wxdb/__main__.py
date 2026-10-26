@@ -24,7 +24,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from . import catalog, etl, grid, gsod, history, points, prevruns, qc, reanalysis, schema, store
+from . import catalog, etl, grid, gsod, history, metar, points, prevruns, qc, reanalysis, schema, store
 
 
 def _load_dim(name, workdir):
@@ -147,17 +147,19 @@ def cmd_history(a):
         years = [now.year - 1, now.year] if now.month == 1 else [now.year]
     if a.source == "gsod":
         years = [y for y in years if y <= gsod.LAST_YEAR]
-    st = history.stations() if a.source == "ghcnh" else None
+    st = history.stations() if a.source == "ghcnh" else metar.stations() if a.source == "metar" else None
     store.ensure_release(history.RELEASE, "ฐานข้อมูล: ค่าตรวจวัดย้อนหลัง",
                          "ค่าตรวจวัดรายชั่วโมงของสถานีในประเทศไทยจาก NOAA GHCNh และรายวันจาก NOAA GSOD (2543–ปัจจุบัน) และชุดข้อมูลย้อนหลังอื่น "
                          "ไฟล์ของปีปัจจุบันถูกแทนที่ทุกเดือน — โครงสร้างและวิธีใช้: docs/DATABASE.md")
     man = store.load_manifest()
     with tempfile.TemporaryDirectory() as d:
-        new_sites = [history.site_rows(st)] if st is not None else []
+        new_sites = [history.site_rows(st) if a.source == "ghcnh" else metar.site_rows(st)] if st is not None else []
         for y in years:
             if a.source == "gsod":
                 df, ss = gsod.year(y)
                 new_sites.append(ss)
+            elif a.source == "metar":
+                df = metar.year(st, y)
             else:
                 df = history.year(st, y)
             if not len(df):
@@ -336,6 +338,12 @@ def cmd_qc(a):
             store.publish_facts(parts)
 
 
+def cmd_reconcile(a):
+    """ซ่อม manifest: ลงทะเบียนไฟล์ใน release ที่ไม่อยู่ใน manifest"""
+    added = store.reconcile()
+    print(f"reconcile: เพิ่ม {len(added)} ไฟล์" + ("".join(f"\n  {x}" for x in added) if added else ""))
+
+
 def cmd_status(a):
     man = store.load_manifest()
     print(f"ปรับปรุง {man.get('generated', '–')}")
@@ -363,7 +371,8 @@ def main(argv=None):
     s.add_parser("points").set_defaults(fn=cmd_points)
     hp = s.add_parser("history")
     hp.add_argument("--years", help="เช่น 2000-2025 หรือ 2026 (ค่าเริ่มต้น: ปีปัจจุบัน)")
-    hp.add_argument("--source", choices=["ghcnh", "gsod"], default="ghcnh", help="gsod: ค่ารายวัน 2543–2568 (หยุดปรับปรุง ส.ค. 2568)")
+    hp.add_argument("--source", choices=["ghcnh", "gsod", "metar"], default="ghcnh",
+                    help="gsod: ค่ารายวัน 2543–2568 (หยุดปรับปรุง ส.ค. 2568) · metar: รายงานรายชั่วโมงของสนามบินจาก IEM")
     hp.set_defaults(fn=cmd_history)
     rp = s.add_parser("reanalysis")
     rp.add_argument("--source", choices=["gee", "monthly"], default="monthly")
@@ -388,6 +397,7 @@ def main(argv=None):
     q.add_argument("--to", dest="end")
     q.add_argument("--dry-run", action="store_true")
     q.set_defaults(fn=cmd_qc)
+    s.add_parser("reconcile").set_defaults(fn=cmd_reconcile)
     s.add_parser("status").set_defaults(fn=cmd_status)
     a = p.parse_args(argv)
     a.fn(a)

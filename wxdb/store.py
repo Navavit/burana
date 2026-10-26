@@ -12,6 +12,8 @@
 import hashlib
 import json
 import os
+import random
+import re
 import shutil
 import subprocess
 import tempfile
@@ -141,31 +143,68 @@ def load_manifest(fresh=None):
 
 def save_manifest(man):
     """บันทึก manifest โดยนำการเปลี่ยนแปลงของรอบนี้ (man["_ops"]) ไปใช้กับฉบับล่าสุดบน release ก่อน
-    เพื่อไม่ให้งานที่รันนาน (เช่น ดึงข้อมูลย้อนหลังในเครื่อง) เขียนทับไฟล์ที่งานอื่นลงทะเบียนไว้ระหว่างนั้น"""
+    เพื่อไม่ให้งานที่รันนาน (เช่น ดึงข้อมูลย้อนหลังในเครื่อง) เขียนทับไฟล์ที่งานอื่นลงทะเบียนไว้ระหว่างนั้น
+    ถ้าสองงานบันทึกพร้อมกัน (GitHub ตอบ 422) จะอ่านฉบับล่าสุดแล้วลองใหม่ · รายการที่ยังหลุดได้ซ่อมด้วย reconcile()"""
     ops = man.pop("_ops", [])
-    if shutil.which("gh") and os.environ.get("WXDB_READONLY") != "1":
-        latest = load_manifest(fresh=True)
-        for tag, names, entries in ops:
-            latest["files"] = [f for f in latest["files"] if not (f["release"] == tag and f["name"] in names)] + entries
-        for k, v in man.items():                        # รายการสะสมอื่น (etl_days, prevrun_unavailable): รวมกัน
-            if isinstance(v, list) and k != "files":
+    lists = {k: v for k, v in man.items() if isinstance(v, list) and k != "files"}   # etl_days, prevrun_unavailable
+    writer = shutil.which("gh") and os.environ.get("WXDB_READONLY") != "1"
+    for attempt in range(6):
+        if writer:
+            latest = load_manifest(fresh=True)
+            for tag, names, entries in ops:
+                latest["files"] = [f for f in latest["files"] if not (f["release"] == tag and f["name"] in names)] + entries
+            for k, v in lists.items():
                 latest[k] = sorted(set(latest.get(k, [])) | set(v))
-        man.clear()
-        man.update(latest)
-    man["generated"] = pd.Timestamp.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-    man["repo"], man["base_url"] = REPO, BASE_URL
-    man["files"] = sorted(man["files"], key=lambda f: (f["table"], f["release"], f["name"]))
-    tot = {}
-    for f in man["files"]:
-        t = tot.setdefault(f["table"], {"files": 0, "rows": 0, "bytes": 0})
-        t["files"] += 1
-        t["rows"] += f.get("rows", 0)
-        t["bytes"] += f.get("bytes", 0)
-    man["totals"] = tot
+            man.clear()
+            man.update(latest)
+        man["generated"] = pd.Timestamp.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        man["repo"], man["base_url"] = REPO, BASE_URL
+        man["files"] = sorted(man["files"], key=lambda f: (f["table"], f["release"], f["name"]))
+        tot = {}
+        for f in man["files"]:
+            t = tot.setdefault(f["table"], {"files": 0, "rows": 0, "bytes": 0})
+            t["files"] += 1
+            t["rows"] += f.get("rows", 0)
+            t["bytes"] += f.get("bytes", 0)
+        man["totals"] = tot
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                p = Path(d) / "manifest.json"
+                p.write_text(json.dumps(man, ensure_ascii=False, indent=1), encoding="utf-8")
+                upload(CATALOG_TAG, [p])
+            return
+        except RuntimeError as e:
+            if attempt == 5 or not any(x in str(e) for x in ("422", "already exists")):
+                raise
+            time.sleep(random.uniform(5, 20))                 # อีกงานกำลังแทนที่ไฟล์เดียวกัน
+
+
+def reconcile(man=None):
+    """ลงทะเบียนไฟล์ Parquet ที่อยู่ใน release db-* แต่ไม่อยู่ใน manifest (เช่น หลุดจากการบันทึกพร้อมกันของสองงาน)
+    ข้ามไฟล์รายวันของเดือนที่รวมเป็นไฟล์รายเดือนแล้ว (รอลบ) เพื่อไม่ให้ข้อมูลซ้ำ · คืนรายชื่อไฟล์ที่เพิ่ม"""
+    man = man if man is not None else load_manifest(fresh=True)
+    have = {(f["release"], f["name"]) for f in man["files"]}
+    tags = [r["tagName"] for r in json.loads(gh("release", "list", "-R", REPO, "--limit", "500", "--json", "tagName").stdout)
+            if r["tagName"].startswith("db-")]
+    added = []
     with tempfile.TemporaryDirectory() as d:
-        p = Path(d) / "manifest.json"
-        p.write_text(json.dumps(man, ensure_ascii=False, indent=1), encoding="utf-8")
-        upload(CATALOG_TAG, [p])
+        for tag in sorted(tags):
+            names = [a["name"] for a in list_assets(tag) if a["name"].endswith(".parquet")]
+            packed = {n[:-len(".parquet")] for n in names if re.fullmatch(r".+__\d{4}-\d{2}\.parquet", n)}
+            for n in names:
+                if (tag, n) in have:
+                    continue
+                m = re.match(r"(.+?)__(\d{4}-\d{2})-\d{2}", n)
+                if m and f"{m.group(1)}__{m.group(2)}" in packed:
+                    continue
+                table = n.split("__")[0] if "__" in n else n[:-len(".parquet")]
+                if table not in schema.TABLES:
+                    continue
+                register(man, tag, [(download(tag, n, Path(d) / n), table)])
+                added.append(f"{tag}/{n}")
+    if added:
+        save_manifest(man)
+    return added
 
 
 def register(man, tag, paths_tables, drop_names=()):

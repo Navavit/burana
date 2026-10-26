@@ -7,7 +7,7 @@
 #     prevruns พยากรณ์ย้อนหลัง (Open-Meteo Previous Runs) ณ สถานีกรมอุตุฯ ก.ค. 2567 – ก.ย. 2569 ทำต่อจากที่ค้าง
 #           รอบละไม่เกิน 2,000 หน่วยโควตา (รวม ~4,000/วัน ให้เหลือโควตาฟรีสำหรับ collect.yml) จนครบแล้วหยุดเอง
 #   วันที่ 3 ของทุกเดือน 02:40 UTC
-#     history ปรับปรุงค่าตรวจวัดรายชั่วโมงของปีปัจจุบันจาก NOAA GHCNh (release db-history)
+#     history ปรับปรุงค่าตรวจวัดรายชั่วโมงของปีปัจจุบันจาก NOAA GHCNh และ METAR สนามบิน (IEM) (release db-history)
 #     reanalysis ปรับปรุง ERA5-Land (Open-Meteo) และ CHIRPS (CHC) 3 เดือนล่าสุด
 #     pack  รวมไฟล์รายวันของเดือนก่อนเป็นไฟล์รายเดือน
 #     prune ลบ runs/ ที่เก่ากว่า 35 วันและอยู่ในฐานข้อมูลแล้วออกจาก branch data และยุบประวัติของ branch data
@@ -92,6 +92,10 @@ jobs:
         if: env.WXDB_TASK == 'daily'
         run: python -m wxdb pack --current
 
+      - name: ซ่อม manifest (ไฟล์ที่หลุดจากการบันทึกพร้อมกัน)
+        if: env.WXDB_TASK == 'daily'
+        run: python -m wxdb reconcile
+
       - name: สรุปสถานะ
         if: always()
         run: python -m wxdb status >> "$GITHUB_STEP_SUMMARY" || true
@@ -114,6 +118,10 @@ jobs:
       - name: ค่าตรวจวัดย้อนหลัง (NOAA GHCNh)
         if: env.WXDB_TASK == 'monthly' || env.WXDB_TASK == 'history'
         run: python -m wxdb history ${{ env.WXDB_TASK == 'history' && inputs.args || '' }}
+
+      - name: METAR สนามบิน (IEM) ปีปัจจุบัน
+        if: env.WXDB_TASK == 'monthly'
+        run: python -m wxdb history --source metar
 
       - name: ข้อมูลย้อนหลังเชิงกริด (ERA5-Land, CHIRPS)
         if: env.WXDB_TASK == 'monthly' || env.WXDB_TASK == 'reanalysis'

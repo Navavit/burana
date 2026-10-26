@@ -640,6 +640,7 @@ python scripts/build_db_docs.py                # สร้าง ER และพ
 | `thaiwater` | [ThaiWater (คลังข้อมูลน้ำแห่งชาติ)](https://www.thaiwater.net/) | สถาบันสารสนเทศทรัพยากรน้ำ (สสน.) | station_network | เปิดเผยตามเงื่อนไขของ สสน. |
 | `air4thai` | [Air4Thai](http://air4thai.pcd.go.th/) | กรมควบคุมมลพิษ | station_network | เปิดเผย |
 | `noaa_ghcnh` | [NOAA Global Historical Climatology Network – hourly (GHCNh)](https://www.ncei.noaa.gov/products/global-historical-climatology-network-hourly) | NOAA NCEI | station_network | สาธารณสมบัติ (US Gov) |
+| `iem_metar` | [METAR สนามบินในประเทศไทย (Iowa Environmental Mesonet)](https://mesonet.agron.iastate.edu/request/download.phtml?network=TH__ASOS) | Iowa State University (จากรายงานของ บวท./กรมอุตุนิยมวิทยา) | station_network | เปิดเผย (อ้างอิง IEM) |
 | `noaa_gsod` | [NOAA Global Surface Summary of the Day (GSOD)](https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.ncdc:C00516) | NOAA NCEI | station_network | สาธารณสมบัติ (US Gov) |
 | `user` | รายงานฝนจากผู้ใช้ | ผู้ใช้ระบบ (GitHub Issues) | crowd | CC BY 4.0 |
 | `openmeteo` | [Open-Meteo Forecast / Ensemble API](https://open-meteo.com/) | Open-Meteo (รวบรวมจากศูนย์พยากรณ์) | model_api | CC BY 4.0 (ใช้งานไม่เชิงพาณิชย์ ≤ 10,000 คำขอ/วัน) |
