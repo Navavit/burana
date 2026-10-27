@@ -4,7 +4,7 @@ GitHub Actions ข้ามรอบตามตาราง (`schedule`) บ่
 จึงใช้ 2 ทางพร้อมกัน
 
 1. **ตารางของ GitHub 2 เวลาต่อชั่วโมง** (นาทีที่ 7 และ 37) — ตั้งไว้ใน `.github/workflows/collect.yml` แล้ว
-2. **บริการภายนอกสั่งรันผ่าน GitHub API ทุกชั่วโมง** (cron-job.org ฟรี) — ตั้งตามขั้นตอนด้านล่าง
+2. **บริการภายนอกสั่งรันผ่าน GitHub API ทุก 10 นาที** (cron-job.org ฟรี) — ตั้งตามขั้นตอนด้านล่าง · เป็นตัวสั่งรันหลัก (ต.ค. 2026: ตารางของ GitHub รันจริงเพียง ~8 จาก 48 รอบต่อวัน)
 
 รอบที่ห่างจากรอบที่สำเร็จก่อนหน้าไม่ถึง 50 นาทีจะข้ามเอง (ขั้น "ข้ามถ้าเพิ่งรันไป" ใช้เวลา ~20 วินาที)
 จึงไม่ดึงข้อมูลซ้ำและไม่เปลืองโควตา Open-Meteo / Google Weather (Google มีเพดานรายเดือนอีกชั้นใน `google_usage.json`)
@@ -15,7 +15,7 @@ GitHub Actions ข้ามรอบตามตาราง (`schedule`) บ่
 1. GitHub → รูปโปรไฟล์ → **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**
 2. ตั้งค่า
    - Token name: `cron-job.org consolidated-weather`
-   - Expiration: 1 ปี (ใส่ปฏิทินเตือนต่ออายุ)
+   - Expiration: ไม่มีวันหมดอายุ (ใช้อยู่ตั้งแต่ 27 ต.ค. 2026) — สิทธิ์จำกัดเฉพาะ Actions ของ repo นี้ · ถ้าตั้งวันหมดอายุ ให้ใส่ปฏิทินเตือนต่ออายุ
    - Repository access: **Only select repositories** → `consolidated-weather`
    - Permissions → Repository permissions → **Actions: Read and write** (ที่เหลือปล่อย No access)
 3. กด Generate แล้วคัดลอก token ไว้ (แสดงครั้งเดียว) — **อย่าวางในแชต อย่าใส่ใน repo**
@@ -28,7 +28,8 @@ token นี้ทำได้แค่สั่งรัน/ยกเลิก 
 2. แท็บ Common
    - Title: `consolidated-weather hourly`
    - URL: `https://api.github.com/repos/Navavit/consolidated-weather/actions/workflows/collect.yml/dispatches`
-   - Execution schedule: **Every hour at minute 12** (อยู่ระหว่างรอบนาทีที่ 7 และ 37 ของ GitHub)
+   - Execution schedule: **ทุก 10 นาที** (ค่าที่ใช้อยู่) — รอบเต็มเกิดราวชั่วโมงละครั้งเพราะรอบที่ห่างจากรอบก่อนไม่ถึง 50 นาทีจะข้ามเอง
+     ถ้าต้องการลดจำนวนรอบที่ถูกข้าม ตั้งเป็นนาทีที่ 5 และ 35 ของทุกชั่วโมงก็ได้ผลเท่ากัน
 3. แท็บ Advanced
    - Request method: **POST**
    - Headers (กด Add ทีละบรรทัด)
