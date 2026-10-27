@@ -26,7 +26,7 @@ import pyarrow.parquet as pq
 
 from . import schema
 
-REPO = os.environ.get("WXDB_REPO", "Navavit/consolidated-weather")   # คงที่ แม้ถูกติดตั้งไปใช้ใน repository อื่น
+REPO = os.environ.get("WXDB_REPO", "Navavit/burana")   # คงที่ แม้ถูกติดตั้งไปใช้ใน repository อื่น
 BASE_URL = f"https://github.com/{REPO}/releases/download"
 CATALOG_TAG = "db-catalog"
 

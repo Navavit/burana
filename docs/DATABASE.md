@@ -334,10 +334,10 @@ con = wxdb.connect(months=["2026-10"], cache_dir="~/wxdb_cache")
 
 ### DuckDB CLI / R / เครื่องมืออื่น
 
-URL ของทุกไฟล์อยู่ใน [`manifest.json`](https://github.com/Navavit/consolidated-weather/releases/download/db-catalog/manifest.json) (ฟิลด์ `files[].release` และ `files[].name`)
+URL ของทุกไฟล์อยู่ใน [`manifest.json`](https://github.com/Navavit/burana/releases/download/db-catalog/manifest.json) (ฟิลด์ `files[].release` และ `files[].name`)
 
 ```sql
-SELECT * FROM read_parquet('https://github.com/Navavit/consolidated-weather/releases/download/db-catalog/site.parquet');
+SELECT * FROM read_parquet('https://github.com/Navavit/burana/releases/download/db-catalog/site.parquet');
 ```
 
 ### คำสั่งดูแลระบบ
@@ -680,5 +680,5 @@ python scripts/build_db_docs.py                # สร้าง ER และพ
 - **ERA5-Land/CHIRPS** เป็นค่าของเซลล์ต้นทาง (0.1° และ 0.05°) ที่ครอบจุดศูนย์กลางเซลล์ th025 ไม่ใช่ค่าเฉลี่ยทั้งเซลล์ 0.25° · เซลล์เหนือทะเลไม่มีค่า ERA5-Land · ค่ารายเดือนจาก Open-Meteo ใช้ฝนและรังสีของ ERA5 (ERA5-Land ใช้ฝนและรังสีของ ERA5 เป็นข้อมูลขับเคลื่อน) ค่าจาก GEE (ช่วงย้อนหลัง) มีลำดับความสำคัญสูงกว่าเมื่อมีทั้งสองช่องทาง (คอลัมน์ `channel`)
 - **Air4Thai** ช่วงเฉลี่ยตามนิยามดัชนีคุณภาพอากาศของกรมควบคุมมลพิษ: PM2.5/PM10 24 ชม., O3/CO 8 ชม., NO2/SO2 1 ชม. (`period_h`) · เก็บตั้งแต่ 18 ต.ค. 2569
 - **พยากรณ์ ณ สถานีอุตุนิยมวิทยา** เก็บโดยรอบรายชั่วโมงทุก 6 ชม. (จุดตรวจทั่วประเทศ) · คำสั่ง `wxdb points` เก็บเฉพาะชั่วโมงตั้งแต่เวลาที่ดึง เนื่องจาก Open-Meteo เติมชั่วโมงก่อนหน้าด้วยผลของรอบก่อน
-- รายละเอียดแหล่งข้อมูล ความถี่ที่ต้นทางปรับปรุง และความล่าช้าของแต่ละชุด ดูที่หน้า [ข้อมูลและแหล่งที่มา](https://navavit.github.io/consolidated-weather/data.html)
+- รายละเอียดแหล่งข้อมูล ความถี่ที่ต้นทางปรับปรุง และความล่าช้าของแต่ละชุด ดูที่หน้า [ข้อมูลและแหล่งที่มา](https://navavit.github.io/burana/data.html)
 - **สัญญาอนุญาต** ข้อมูลแต่ละแหล่งอยู่ภายใต้เงื่อนไขของผู้ผลิต (ตาราง `source`) — การเผยแพร่ต่อควรอ้างอิงแหล่งที่มาตามนั้น

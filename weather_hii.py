@@ -37,7 +37,7 @@ BINS = [(1, 5), (5, 10), (10, 20), (20, 35), (35, 50), (50, 70), (70, 90), (90, 
 
 
 def _get(url, **kw):
-    r = core.SESSION.get(url, timeout=90, headers={"User-Agent": "consolidated-weather"}, **kw)
+    r = core.SESSION.get(url, timeout=90, headers={"User-Agent": "burana"}, **kw)
     r.raise_for_status()
     return r
 

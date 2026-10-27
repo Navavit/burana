@@ -88,7 +88,7 @@ def fetch_tmd_today(cfg=None):
 
 def fetch_thaiwater_rain24():
     """ฝนสะสม 24 ชม. ล่าสุดจากสถานีโทรมาตรทั่วประเทศ (สสน., กรมอุตุฯ, กรมชลประทาน ฯลฯ ~4,000 จุด)"""
-    r = core.SESSION.get(THAIWATER_RAIN24_URL, timeout=90, headers={"User-Agent": "consolidated-weather"})
+    r = core.SESSION.get(THAIWATER_RAIN24_URL, timeout=90, headers={"User-Agent": "burana"})
     r.raise_for_status()
     j = r.json()
     rows = j.get("data", j)
@@ -118,7 +118,7 @@ def fetch_thaiwater_hourly(station_id):
     """ฝนรายชั่วโมงของเครื่องวัดโทรมาตร 1 สถานี (ย้อนหลัง ~36 ชม. · ThaiWater ไม่มีประวัติรายชั่วโมงเก่ากว่านี้)
     rain_1h ที่เวลา t = ฝนใน (t-1h, t] (เวลาไทย)"""
     r = core.SESSION.get(THAIWATER_HOURLY_URL, params={"station_type": "tele_station", "station_id": station_id},
-                         timeout=60, headers={"User-Agent": "consolidated-weather"})
+                         timeout=60, headers={"User-Agent": "burana"})
     r.raise_for_status()
     return [{"id": str(station_id), "time": pd.Timestamp(x["rainfall_datetime"]).isoformat(), "rain_1h": _f(x["rainfall_value"])}
             for x in r.json().get("data", []) if _f(x.get("rainfall_value")) is not None]

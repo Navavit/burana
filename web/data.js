@@ -49,7 +49,7 @@ function period(d) {
 
 async function main() {
   const C = await fetch("data/catalog.json", { cache: "no-cache" }).then((r) => r.json());
-  const repo = (await fetch("data/index.json").then((r) => r.json()).catch(() => ({}))).repo || "Navavit/consolidated-weather";
+  const repo = (await fetch("data/index.json").then((r) => r.json()).catch(() => ({}))).repo || "Navavit/burana";
   if ($("db-doc")) $("db-doc").href = `https://github.com/${repo}/blob/main/docs/DATABASE.md`;
   $("repo-link").href = `https://github.com/${repo}`;
   $("updated").textContent = `ปรับปรุง ${new Date(C.generated).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })}`;

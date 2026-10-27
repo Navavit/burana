@@ -278,7 +278,7 @@ def _ghcnh_stations(archive):
 def _manifest():
     try:
         import requests                                 # อ่าน URL สาธารณะตรง ๆ (collect.yml ไม่ได้ติดตั้ง pyarrow)
-        repo = os.environ.get("GITHUB_REPOSITORY", "Navavit/consolidated-weather")
+        repo = os.environ.get("GITHUB_REPOSITORY", "Navavit/burana")
         r = requests.get(f"https://github.com/{repo}/releases/download/db-catalog/manifest.json", timeout=60)
         r.raise_for_status()
         return r.json()

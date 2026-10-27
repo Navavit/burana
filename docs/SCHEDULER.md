@@ -14,9 +14,9 @@ GitHub Actions ข้ามรอบตามตาราง (`schedule`) บ่
 
 1. GitHub → รูปโปรไฟล์ → **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**
 2. ตั้งค่า
-   - Token name: `cron-job.org consolidated-weather`
+   - Token name: `cron-job.org burana`
    - Expiration: ไม่มีวันหมดอายุ (ใช้อยู่ตั้งแต่ 27 ต.ค. 2026) — สิทธิ์จำกัดเฉพาะ Actions ของ repo นี้ · ถ้าตั้งวันหมดอายุ ให้ใส่ปฏิทินเตือนต่ออายุ
-   - Repository access: **Only select repositories** → `consolidated-weather`
+   - Repository access: **Only select repositories** → `burana`
    - Permissions → Repository permissions → **Actions: Read and write** (ที่เหลือปล่อย No access)
 3. กด Generate แล้วคัดลอก token ไว้ (แสดงครั้งเดียว) — **อย่าวางในแชต อย่าใส่ใน repo**
 
@@ -26,8 +26,8 @@ token นี้ทำได้แค่สั่งรัน/ยกเลิก 
 
 1. สมัครที่ https://cron-job.org (ฟรี) → **Create cronjob**
 2. แท็บ Common
-   - Title: `consolidated-weather hourly`
-   - URL: `https://api.github.com/repos/Navavit/consolidated-weather/actions/workflows/collect.yml/dispatches`
+   - Title: `burana hourly`
+   - URL: `https://api.github.com/repos/Navavit/burana/actions/workflows/collect.yml/dispatches`
    - Execution schedule: **ทุก 10 นาที** (ค่าที่ใช้อยู่) — รอบเต็มเกิดราวชั่วโมงละครั้งเพราะรอบที่ห่างจากรอบก่อนไม่ถึง 50 นาทีจะข้ามเอง
      ถ้าต้องการลดจำนวนรอบที่ถูกข้าม ตั้งเป็นนาทีที่ 5 และ 35 ของทุกชั่วโมงก็ได้ผลเท่ากัน
 3. แท็บ Advanced

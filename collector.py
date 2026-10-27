@@ -234,7 +234,7 @@ PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 
 def cmd_install_launchd(args):
     every = args.every or core.CFG["collect_every_minutes"]
-    label = "local.consolidated-weather.collector"
+    label = "local.burana.collector"
     root = core.ROOT
     (root / "logs").mkdir(exist_ok=True)
     out = root / "scripts" / f"{label}.plist"

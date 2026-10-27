@@ -32,7 +32,7 @@ def models(cfg=None):
 
 
 def fetch_yesterday():
-    r = core.SESSION.get(URL, timeout=120, headers={"User-Agent": "consolidated-weather"})
+    r = core.SESSION.get(URL, timeout=120, headers={"User-Agent": "burana"})
     r.raise_for_status()
     j = r.json()
     rows = j.get("data", j)
