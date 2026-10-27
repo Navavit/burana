@@ -320,7 +320,7 @@ function showLocation() {
       `${m.name}${m.grid_km ? ` (${m.grid_km} กม.)` : ""}`)));
   $("highlight").onchange = (e) => { state.highlight = e.target.value; store.set("highlight", state.highlight); renderCharts(); };
   renderAll();
-  if (state.map) state.map.setView([state.loc.lat, state.loc.lon], Math.max(state.map.getZoom(), 8));   // ดูฝนรอบตำแหน่งที่เลือก
+  if (state.map) showProvinceBoundary();    // ดูฝนรอบตำแหน่งที่เลือก พร้อมขอบเขตจังหวัด
   state.markers.forEach((m, j) => m.setStyle({ weight: j === i ? 3 : 1.5, radius: j === i ? 10 : 8,
     fillColor: j === i ? cssVar("--ink") : cssVar("--surface") }));
   if (state.gpsMarker) state.gpsMarker.remove();
@@ -330,6 +330,33 @@ function showLocation() {
     }).bindTooltip(i === -2 ? state.loc.name : "ตำแหน่งของผู้ใช้", { direction: "top", className: "map-label" }).addTo(state.map);
   }
   renderNearSkill();
+}
+
+// ขอบเขตจังหวัดของตำแหน่งที่เลือก (จังหวัดตามชื่อ หรือจังหวัดที่พิกัดตกอยู่ สำหรับ 📍 ตำแหน่งของผู้ใช้) แล้วซูมให้เห็นทั้งจังหวัด
+let provGeo = null;
+function inRing(x, y, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+function inFeature(lon, lat, f) {
+  const g = f.geometry, polys = g.type === "Polygon" ? [g.coordinates] : g.type === "MultiPolygon" ? g.coordinates : [];
+  return polys.some((p) => inRing(lon, lat, p[0]) && !p.slice(1).some((h) => inRing(lon, lat, h)));
+}
+async function showProvinceBoundary() {
+  const loc = state.loc;
+  if (!provGeo) provGeo = await getJSON("th_provinces.geojson").catch(() => null);
+  if (state.loc !== loc) return;                       // เปลี่ยนตำแหน่งระหว่างโหลด
+  if (state.provLayer) { state.provLayer.remove(); state.provLayer = null; }
+  const fs = (provGeo || {}).features || [];
+  const f = fs.find((x) => x.properties.name === loc.name) || fs.find((x) => inFeature(loc.lon, loc.lat, x));
+  if (!f) { state.map.setView([loc.lat, loc.lon], Math.max(state.map.getZoom(), 8)); return; }
+  state.provLayer = L.geoJSON(f, { interactive: false, style: {
+    color: cssVar("--ink"), weight: 2.5, dashArray: "6 4", fillColor: cssVar("--ink"), fillOpacity: 0.05 } }).addTo(state.map);
+  state.map.fitBounds(state.provLayer.getBounds(), { padding: [16, 16], maxZoom: 10 });
 }
 
 function renderAll() {
