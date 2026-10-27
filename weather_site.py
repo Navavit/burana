@@ -125,7 +125,7 @@ def write_site(results, out_dir, cfg=None):
     # สำหรับ "📍 พยากรณ์ตรงที่ฉันอยู่": เบราว์เซอร์ดึง Open-Meteo เองแล้วคำนวณแบบเดียวกับฝั่ง Python
     (out / "data" / "meta.json").write_text(json.dumps(client_meta(cfg), ensure_ascii=False), encoding="utf-8")
     (out / "data" / "now_obs.json").write_text(json.dumps(
-        {"tmd": obs.get("tmd", []), "air": obs.get("air", [])}, ensure_ascii=False), encoding="utf-8")
+        {"tmd": obs.get("tmd", []), "air": obs.get("air", []), "sensor": obs.get("sensor", [])}, ensure_ascii=False), encoding="utf-8")
     (out / "data" / "stations.json").write_text(json.dumps(stations_payload(obs), ensure_ascii=False,
                                                            separators=(",", ":")), encoding="utf-8")
     (out / ".nojekyll").write_text("")

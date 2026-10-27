@@ -241,10 +241,28 @@ def nearest(lat, lon, stations, max_km=MAX_STATION_KM):
     return {**best, "dist_km": round(d, 1)} if d <= max_km else None
 
 
+def fetch_sensors(hours=3):
+    """ค่าล่าสุดของเซนเซอร์ของผู้ใช้ (wxdb.sensor เช่น PFAL SIS KU) สำหรับแผนที่ · ไม่มี publicId = ข้าม"""
+    from wxdb import sensor
+    end = pd.Timestamp.now(tz="UTC").tz_localize(None).ceil("min")
+    out = []
+    for sid, s in sensor.SENSORS.items():
+        d = sensor.fetch(sid, end - pd.Timedelta(hours=hours), end + pd.Timedelta(minutes=1))
+        if d is None or d.empty:
+            continue
+        last = d.sort_values("time").groupby("var_id").last()
+        t = last["time"].max() + pd.Timedelta(hours=7)                 # UTC → เวลาไทย (แบบเดียวกับสถานีอื่น)
+        val = lambda v: round(float(last.loc[v, "value"]), 1) if v in last.index else None  # noqa: E731
+        out.append({"id": sid, "name": s["name"], "lat": s["lat"], "lon": s["lon"], "time": t.isoformat(timespec="minutes"),
+                    "temp": val("t2m"), "rh": val("rh2m")})
+    return out
+
+
 def fetch_all(cfg=None):
     """ดึงทุกแหล่งครั้งเดียว ใช้กับทุกตำแหน่งและแผนที่สถานี (ล้มเหลวแหล่งไหนก็ข้ามแหล่งนั้น)"""
-    out = {"tmd": [], "air": [], "tw": []}
-    for key, fn in (("tmd", lambda: fetch_tmd_stations(cfg)), ("air", fetch_air4thai), ("tw", fetch_thaiwater_rain24)):
+    out = {"tmd": [], "air": [], "tw": [], "sensor": []}
+    for key, fn in (("tmd", lambda: fetch_tmd_stations(cfg)), ("air", fetch_air4thai), ("tw", fetch_thaiwater_rain24),
+                    ("sensor", fetch_sensors)):
         try:
             out[key] = fn()
         except Exception as e:

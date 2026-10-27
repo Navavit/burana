@@ -65,6 +65,7 @@ jobs:
         env:
           TMD_NWP_TOKEN: ${{ secrets.TMD_NWP_TOKEN }}
           GOOGLE_WEATHER_API_KEY: ${{ secrets.GOOGLE_WEATHER_API_KEY }}   # ว่างได้ ถ้ายังไม่ตั้ง จะข้าม Google
+          PFAL_PUBLIC_ID: ${{ secrets.PFAL_PUBLIC_ID }}                   # เซนเซอร์ PFAL บนแผนที่ (ว่างได้ จะข้าม)
         run: |
           python collector.py run --export-dir archive --no-db --site-dir site
           date +%s > archive/last_run.txt

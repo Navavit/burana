@@ -537,6 +537,11 @@ def model_meta():
     return rows
 
 
+def _sensors():
+    from wxdb import sensor
+    return sensor.SENSORS
+
+
 def build(archive, site_dir):
     man = _manifest()
     live, pts = live_stats(archive, man)
@@ -557,6 +562,7 @@ def build(archive, site_dir):
                    for m in list(core.DETERMINISTIC_MODELS.values()) + [core.TMD_MODEL, core.GOOGLE_MODEL]],
         "ensembles": [{"name": m["name"], "members": m["members"], "grid_km": m["grid_km"]} for m in core.ENSEMBLE_MODELS.values()],
         "layers": {"tmd": _coords(archive, "tmd3h"), "air4thai": _coords(archive, "air4thai"), "ghcnh": ghcnh,
+                   "sensor": [[k, s["name"], s["lat"], s["lon"]] for k, s in _sensors().items()],
                    "check": [[p["key"], p["name"], p["lat"], p["lon"], p.get("for", ""), bool(p.get("national"))] for p in pts]},
     }
     out = Path(site_dir) / "data"

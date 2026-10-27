@@ -152,6 +152,8 @@ async function initMap(C) {
     ["thaiwater", T("เครื่องวัดฝน ThaiWater", "ThaiWater rain gauges"), "#4f9fe3", S.tw.map((g) => dot(g[ci("lat")], g[ci("lon")], "#4f9fe3", 2.5, `${g[ci("name")]} · ${tx(g[ci("agency")])}`)), true],
     ["tmd", T("สถานีอุตุนิยมวิทยา (TMD)", "Weather stations (TMD)"), "#d7301f", (Lyr.tmd || []).map((s) => dot(s[2], s[3], "#d7301f", 5, T(`สถานี${s[1]} (${s[0]})`, `${s[1]} (${s[0]})`))), true],
     ["air", T("สถานีคุณภาพอากาศ (Air4Thai)", "Air quality stations (Air4Thai)"), "#7b3294", (Lyr.air4thai || []).map((s) => dot(s[2], s[3], "#7b3294", 4, `${s[1]} (${s[0]})`)), false],
+    ["sensor", T("เซนเซอร์ PFAL SIS KU", "PFAL SIS KU sensor"), "#c51b7d", (Lyr.sensor || []).map((s) => L.circleMarker([s[2], s[3]], { radius: 7, color: "#c51b7d", weight: 3, fillColor: "#fff", fillOpacity: 1 })
+      .bindTooltip(T(s[1], "Outdoor sensor, PFAL SIS KU (Kasetsart University, Bang Khen)"), { className: "map-label" })), true],
     ["ghcnh", T("สถานี NOAA GHCNh", "NOAA GHCNh stations"), "#1a9850", (Lyr.ghcnh || []).map((s) => dot(s[2], s[3], "#1a9850", 4, `${s[1]} (${s[0]})`)), false],
     ["check", T("จุดที่ใช้ตรวจโมเดล", "Model check points"), "#111", (Lyr.check || []).map((s) => L.circleMarker([s[2], s[3]], { radius: 7, color: "#111", weight: 2, fill: false })
       .bindTooltip(`${s[1]} · ${s[5] ? T("จุดตรวจทั่วประเทศ", "nationwide check point") : T("จุดตรวจของ" + s[4], "check point of " + tx(s[4]))}`, { className: "map-label" })), false],

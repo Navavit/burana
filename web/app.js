@@ -1422,6 +1422,14 @@ async function loadStations() {
       renderer, radius: 10, weight: 2, color: "#eb6834", fill: false, interactive: false })));
     add("check", T("จุดตรวจโมเดล", "Model check points"), "⭕", rings, true);
   }
+  // เซนเซอร์ของผู้ใช้ (PFAL SIS KU) · ไม่ใช่สถานีมาตรฐาน
+  add("sensor", T("เซนเซอร์ PFAL", "PFAL sensor"), "🌡️", (now.sensor || []).map((x) => L.circleMarker([x.lat, x.lon], {
+    renderer, radius: 7, weight: 2.5, color: "#c51b7d", fillColor: cssVar("--surface"), fillOpacity: 1,
+  }).bindPopup(() => el("div", { class: "pop" }, el("b", {}, T(`🌡️ ${x.name}`, "🌡️ Outdoor sensor, PFAL SIS KU (Kasetsart University, Bang Khen)")),
+    el("div", {}, T(`อุณหภูมิ ${fmt(x.temp)} °C · ความชื้น ${fmt(x.rh, 0)}%`, `Temperature ${fmt(x.temp)} °C · humidity ${fmt(x.rh, 0)}%`)),
+    el("div", { class: "muted" }, `${String(x.time).replace("T", " ")}${T(" น.", "")}`),
+    el("div", { class: "muted" }, T("เซนเซอร์ต้นทุนต่ำ ไม่ใช่สถานีมาตรฐาน · ช่วงเช้าอ่านสูงกว่าสถานีอ้างอิง ~1–2 °C",
+      "Low-cost sensor, not a standard station · reads ~1–2 °C above the reference station in the morning"))))), true);
   // PM2.5 (Air4Thai)
   add("air", "PM2.5", "😷", now.air.map((x) => L.circleMarker([x.lat, x.lon], {
     renderer, radius: 5, weight: 1, color: "#fff", fillColor: PM_COLOR.find(([lim]) => x.pm25 < lim)[1], fillOpacity: 0.95,
