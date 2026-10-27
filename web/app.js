@@ -26,7 +26,7 @@ const CHARTS = [
 ];
 const DAYS = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
 
-const state = { index: null, loc: null, locIdx: 0, highlight: null, param: "tmax", map: null, markers: [], gps: null };
+const state = { index: null, loc: null, locIdx: 0, highlight: null, param: "tmax", map: null, markers: [], gps: null, prov: null };
 
 // ---------------------------------------------------------------------------
 // เครื่องมือ
@@ -148,8 +148,8 @@ async function init() {
     $("v-note").textContent = "ยังไม่มีข้อมูล — ระบบเริ่มรวบรวมค่าตรวจวัดแล้ว ผลการตรวจสอบจะแสดงภายในไม่กี่ชั่วโมง";
   });
   state.meta = await getJSON("data/meta.json").catch(() => null);
-  // ค่าเริ่มต้น = 📍 ตรงที่ฉันอยู่ · แสดงตำแหน่งแรกไปก่อนระหว่างรออนุญาตตำแหน่ง/คำนวณ (ถ้า GPS ใช้ไม่ได้ก็ค้างที่ตำแหน่งแรก)
-  const tab = store.get("tab") || "gps";
+  // ค่าเริ่มต้น = กรุงเทพมหานคร (ตำแหน่งแรก) · จำแท็บที่เลือกล่าสุดต่อเครื่อง (📍 ตำแหน่งของผู้ใช้ / จังหวัด / ทั่วประเทศ)
+  const tab = store.get("tab") || "loc:0";
   const saved = tab.startsWith("loc:") ? parseInt(tab.slice(4), 10) : 0;
   renderChips();
   initMap();
@@ -158,6 +158,7 @@ async function init() {
   else if (wantHeat || tab === "heat") showHeat(true);
   else if (wantNat || tab === "th") showNat(true);
   else if (tab === "gps") selectGps(false);
+  else if (tab.startsWith("prov:")) selectProvince(tab.slice(5), false);
   let t;
   window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(renderCharts, 150); });
 }
@@ -189,9 +190,7 @@ function renderChips() {
   $("locations").replaceChildren(
     el("button", { class: "chip", id: "gps-chip", role: "tab", type: "button", "aria-selected": String(state.locIdx === -1),
       onclick: () => selectGps() }, "📍 ตำแหน่งของผู้ใช้"),
-    ...state.index.locations.map((l, i) =>
-      el("button", { class: "chip", role: "tab", type: "button", "data-idx": String(i), "aria-selected": String(i === state.locIdx),
-        onclick: () => selectLocation(i) }, l.name)),
+    provinceSelect(),
     el("button", { class: "chip", id: "nat-chip", role: "tab", type: "button", "aria-selected": "false",
       onclick: () => showNat(true) }, "🇹🇭 ทั่วประเทศ"),
     el("button", { class: "chip", id: "heat-chip", role: "tab", type: "button", "aria-selected": "false",
@@ -207,7 +206,51 @@ function markChips() {
   [...$("locations").children].forEach((c) => c.setAttribute("aria-selected", String(
     c.id === "about-chip" ? about : c.id === "heat-chip" ? heat : c.id === "nat-chip" ? nat
       : !other && (c.id === "gps-chip" ? state.locIdx === -1 : Number(c.dataset.idx) === state.locIdx))));
+  const ps = $("prov-select");
+  ps.setAttribute("aria-selected", String(!other && state.locIdx !== -1));
+  ps.value = state.locIdx === -2 ? state.prov : state.locIdx >= 0 ? state.index.locations[state.locIdx].name : "";
   $("gps-note").hidden = other || state.locIdx !== -1;
+  $("prov-note").hidden = other || state.locIdx !== -2;
+}
+
+// เลือกจังหวัด: จังหวัดที่ระบบประมวลผลไว้ (มี TMD WRF, Google, HII, จุดตรวจของตัวเอง) ใช้ไฟล์จากเซิร์ฟเวอร์
+// จังหวัดอื่นคำนวณในเบราว์เซอร์ ณ จุดตัวแทนของจังหวัด แบบเดียวกับ 📍 ตำแหน่งของผู้ใช้
+function provinceSelect() {
+  const own = state.index.locations.map((l) => l.name);
+  const others = ((state.meta || {}).provinces || []).map((p) => p.name).filter((n) => !own.includes(n))
+    .sort((a, b) => a.localeCompare(b, "th"));
+  const sel = el("select", { class: "chip prov-select", id: "prov-select", role: "tab", "aria-label": "เลือกจังหวัด" },
+    el("option", { value: "", hidden: true }, "🏙️ เลือกจังหวัด"),
+    ...own.map((n) => el("option", { value: n }, n)),
+    ...others.map((n) => el("option", { value: n }, n)));
+  sel.onchange = () => {
+    const i = own.indexOf(sel.value);
+    if (i >= 0) selectLocation(i); else selectProvince(sel.value);
+  };
+  return sel;
+}
+
+async function selectProvince(name, remember = true) {
+  const p = ((state.meta || {}).provinces || []).find((x) => x.name === name);
+  if (!p) return;
+  document.body.classList.remove("about-mode", "heat-mode", "nat-mode");
+  if (["#about", "#heat", "#th"].includes(location.hash)) history.replaceState(null, "", location.pathname);
+  if (remember) store.set("tab", `prov:${name}`);
+  state.locIdx = -2;
+  state.prov = name;
+  state.gps = null;
+  markChips();
+  document.body.style.opacity = "0.6";
+  try {
+    const loc = await buildLocalPayload(p.lat, p.lon);
+    if (state.prov !== name) return;         // ผู้ใช้เปลี่ยนจังหวัดระหว่างโหลด
+    state.loc = { ...loc, name };
+    showLocation();
+  } catch (e) {
+    $("prov-note").textContent = `ไม่สามารถโหลดผลพยากรณ์ของ${name} โปรดลองใหม่`;
+  } finally {
+    document.body.style.opacity = "";
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -254,6 +297,7 @@ async function selectLocation(i, remember = true) {
   document.body.classList.remove("about-mode", "heat-mode", "nat-mode");
   if (["#about", "#heat", "#th"].includes(location.hash)) history.replaceState(null, "", location.pathname);
   state.locIdx = i;
+  state.prov = null;
   state.gps = null;                         // เปลี่ยนแท็บ = กลับมาใช้ตำแหน่งของแท็บนั้น
   if (remember) store.set("tab", `loc:${i}`);
   markChips();
@@ -280,10 +324,10 @@ function showLocation() {
   state.markers.forEach((m, j) => m.setStyle({ weight: j === i ? 3 : 1.5, radius: j === i ? 10 : 8,
     fillColor: j === i ? cssVar("--ink") : cssVar("--surface") }));
   if (state.gpsMarker) state.gpsMarker.remove();
-  if (i === -1 && state.map) {
+  if (i < 0 && state.map) {
     state.gpsMarker = L.circleMarker([state.loc.lat, state.loc.lon], {
       radius: 10, color: cssVar("--ink"), weight: 3, fillColor: cssVar("--ink"), fillOpacity: 1,
-    }).bindTooltip("ตำแหน่งของผู้ใช้", { direction: "top", className: "map-label" }).addTo(state.map);
+    }).bindTooltip(i === -2 ? state.loc.name : "ตำแหน่งของผู้ใช้", { direction: "top", className: "map-label" }).addTo(state.map);
   }
   renderNearSkill();
 }
@@ -496,6 +540,7 @@ async function selectGps(remember = true) {
     state.loc = await buildLocalPayload(lat, lon);
     state.gps = { lat, lon };
     state.locIdx = -1;
+    state.prov = null;
     markChips();
     showLocation();
     chip.textContent = `📍 ตำแหน่งของผู้ใช้ (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
@@ -514,7 +559,7 @@ function bangkokNow() {
 }
 function reportTarget() {
   if (state.gps) return { name: state.locIdx === -1 ? "ตำแหน่งของผู้ใช้ (GPS)" : "ตำแหน่ง GPS", lat: state.gps.lat, lon: state.gps.lon };
-  const l = state.index.locations[state.locIdx];
+  const l = state.locIdx === -2 ? state.loc : state.index.locations[state.locIdx];
   return { name: l.name, lat: l.lat, lon: l.lon };
 }
 function report(rained) {
