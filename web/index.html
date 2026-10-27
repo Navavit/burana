@@ -3,20 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ระบบเปรียบเทียบและตรวจสอบพยากรณ์อากาศหลายแบบจำลอง</title>
+  <title>BURANA บูรณา · ฐานข้อมูลภูมิอากาศและแบบจำลองพยากรณ์อากาศของประเทศไทย</title>
   <meta name="description" content="ระบบเปรียบเทียบพยากรณ์ฝน อุณหภูมิ และดัชนีความร้อนจากแบบจำลองเชิงตัวเลขหลายระบบ พร้อมการตรวจสอบความถูกต้องกับค่าตรวจวัดในประเทศไทย ปรับปรุงทุกชั่วโมง">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌦️</text></svg>">
+  <link rel="icon" href="img/burana.svg" type="image/svg+xml">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="top">
     <div class="wrap top-row">
-      <div>
-        <h1>🌦️ ระบบเปรียบเทียบและตรวจสอบพยากรณ์อากาศหลายแบบจำลอง</h1>
-        <p class="sub" id="updated">กำลังโหลด…</p>
+      <div class="brand">
+        <img class="brand-mark" src="img/burana.svg" alt="" width="44" height="44">
+        <div>
+          <h1>BURANA <span class="brand-th">บูรณา</span></h1>
+          <p class="tagline">ฐานข้อมูลเปิดแบบบูรณาการของข้อมูลภูมิอากาศและแบบจำลองพยากรณ์อากาศของประเทศไทย</p>
+          <p class="sub" id="updated">กำลังโหลด…</p>
+        </div>
       </div>
-      <div class="top-actions"><a class="ghost data-link" href="data.html">📚 ข้อมูลและแหล่งที่มา</a>
+      <div class="top-actions"><a class="inst-logos" href="https://sis.ku.ac.th/" target="_blank" rel="noopener" title="วิทยาลัยบูรณาการศาสตร์ มหาวิทยาลัยเกษตรศาสตร์">
+          <img src="img/logo-ku.png" alt="มหาวิทยาลัยเกษตรศาสตร์" height="40"><img src="img/logo-sis.png" alt="วิทยาลัยบูรณาการศาสตร์" height="40"></a>
+        <a class="ghost data-link" href="data.html">📚 ข้อมูลและแหล่งที่มา</a>
       <button id="theme" class="ghost" type="button" aria-label="สลับโหมดสว่าง/มืด">🌓</button></div>
     </div>
   </header>
@@ -378,6 +384,8 @@
       คุณภาพอากาศ <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener">CAMS</a> ·
       ค่าวัดจริง: <a href="https://data.tmd.go.th/" target="_blank" rel="noopener">สถานีกรมอุตุฯ</a>, <a href="http://air4thai.pcd.go.th/" target="_blank" rel="noopener">Air4Thai (คพ.)</a> ·
       เรดาร์ <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a></p>
+<p class="foot-org"><span class="inst-logos"><img src="img/logo-ku.png" alt="มหาวิทยาลัยเกษตรศาสตร์" height="32"><img src="img/logo-sis.png" alt="วิทยาลัยบูรณาการศาสตร์" height="32"></span>
+      BURANA (บูรณา) พัฒนาโดย วิทยาลัยบูรณาการศาสตร์ มหาวิทยาลัยเกษตรศาสตร์</p>
     <p>ผลพยากรณ์เป็นผลจากแบบจำลองเชิงตัวเลข มิใช่ประกาศอย่างเป็นทางการ · <a id="docs-link" target="_blank" rel="noopener">หลักการของแต่ละแบบจำลอง</a> · <a id="repo-link" target="_blank" rel="noopener">รหัสต้นฉบับ</a> · <a href="data.html">ข้อมูลและแหล่งที่มา</a></p>
   </footer>
 

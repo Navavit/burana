@@ -51,7 +51,7 @@ SOURCES = [
     ("gsmap", "JAXA GSMaP (v8 operational / v6 reanalysis)", "JAXA Earth Observation Research Center", "satellite",
      "https://sharaku.eorc.jaxa.jp/GSMaP/", "ใช้ได้โดยอ้างอิงแหล่งที่มา (JAXA)", "รายวัน (รวมจากรายชั่วโมง)",
      "ฝนจากดาวเทียมหลายดวง 0.1° ปรับแก้ด้วยเครื่องวัดฝน (gauge-adjusted) · ล่าช้า ~3 วัน · ดึงผ่าน Google Earth Engine"),
-    ("heatsafe", "พยากรณ์ภัยความร้อนรายเขต (weather_heatsafe.py)", "Consolidated Weather", "model_api", "", "CC BY 4.0", "รายวัน",
+    ("heatsafe", "พยากรณ์ภัยความร้อนรายเขต (weather_heatsafe.py)", "BURANA", "model_api", "", "CC BY 4.0", "รายวัน",
      "ปรับแก้ความเอนเอียงจากผลทดสอบย้อนหลัง"),
 ]
 
@@ -107,7 +107,7 @@ def models():
          "physics": "AI/ML", "grid_km": core.GOOGLE_MODEL["grid_km"], "members": 1, "source_id": "google_weather"},
         {"model_id": "hii_wrfroms", "name": "HII WRF-ROMS", "agency": "สสน.", "kind": "regional", "physics": "Physics",
          "grid_km": 3, "members": 1, "source_id": "hii_image"},
-        {"model_id": "median", "name": "ค่ามัธยฐานหลายแบบจำลอง", "agency": "Consolidated Weather", "kind": "det",
+        {"model_id": "median", "name": "ค่ามัธยฐานหลายแบบจำลอง", "agency": "BURANA", "kind": "det",
          "physics": "Physics", "grid_km": None, "members": None, "source_id": "openmeteo"},
         # ใช้เฉพาะพยากรณ์ย้อนหลัง (Previous Runs มีชุด 0.25° ย้อนถึง 2567)
         {"model_id": "ecmwf_ifs025", "name": "ECMWF IFS 0.25°", "agency": "ECMWF", "kind": "det", "physics": "Physics",

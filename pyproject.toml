@@ -1,4 +1,4 @@
-# แพ็กเกจ wxdb สำหรับงานประยุกต์ที่อ่านฐานข้อมูลของ Consolidated Weather (ไม่รวมตัวเก็บข้อมูล)
+# แพ็กเกจ wxdb สำหรับงานประยุกต์ที่อ่านฐานข้อมูลของ BURANA (ไม่รวมตัวเก็บข้อมูล)
 #   pip install "wxdb @ git+https://github.com/Navavit/consolidated-weather@wxdb-v1.0.0"
 #   pip install "wxdb[verify] @ git+..."      # รวม scipy สำหรับ Fractions Skill Score
 # โมดูลฝั่งเขียน (etl, grid, history, prevruns, reanalysis, points, catalog, __main__) ใช้ได้เฉพาะใน repository นี้
@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "wxdb"
 version = "1.0.0"
-description = "อ่านฐานข้อมูลอากาศและแบบจำลองพยากรณ์ของประเทศไทย (Consolidated Weather) ด้วย DuckDB และฟังก์ชันตรวจสอบความถูกต้องมาตรฐาน"
+description = "อ่านฐานข้อมูลอากาศและแบบจำลองพยากรณ์ของประเทศไทย (BURANA) ด้วย DuckDB และฟังก์ชันตรวจสอบความถูกต้องมาตรฐาน"
 readme = "docs/DATABASE.md"
 requires-python = ">=3.10"
 dependencies = ["duckdb>=1.0", "pandas>=1.5", "pyarrow>=15", "numpy>=1.23", "requests>=2.28"]

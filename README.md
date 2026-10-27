@@ -1,4 +1,13 @@
-# Consolidated Weather: ระบบรวบรวม เปรียบเทียบ และตรวจสอบพยากรณ์อากาศหลายแบบจำลองสำหรับประเทศไทย
+<p align="center">
+  <img src="web/img/burana.svg" alt="BURANA" height="72">&nbsp;&nbsp;
+  <img src="web/img/logo-ku.png" alt="มหาวิทยาลัยเกษตรศาสตร์" height="72">&nbsp;
+  <img src="web/img/logo-sis.png" alt="วิทยาลัยบูรณาการศาสตร์" height="72">
+</p>
+
+# BURANA (บูรณา): ฐานข้อมูลเปิดแบบบูรณาการของข้อมูลภูมิอากาศและแบบจำลองพยากรณ์อากาศของประเทศไทย
+
+**B**ig-data **U**nified **R**epository of **A**tmospheric observations and **N**umerical forecast **A**rchives ·
+พัฒนาโดย วิทยาลัยบูรณาการศาสตร์ มหาวิทยาลัยเกษตรศาสตร์ · (repository ชื่อเดิม `consolidated-weather`)
 
 ระบบรวบรวมข้อมูลอุตุนิยมวิทยาแบบอัตโนมัติ ประกอบด้วยสามส่วน:
 
@@ -31,7 +40,7 @@ flowchart LR
     S2["แบบจำลองพยากรณ์<br/>ระดับโลก · ensemble · ระดับภูมิภาค"]
     S3["ข้อมูลย้อนหลังตั้งแต่ 2000<br/>สถานี NOAA/สนามบิน · reanalysis · ดาวเทียม"]
   end
-  subgraph SYS["Consolidated Weather"]
+  subgraph SYS["BURANA"]
     direction TB
     C1["รวบรวมอัตโนมัติ<br/>ทุกชั่วโมง"]
     C2["ควบคุมคุณภาพ<br/>และตรวจสอบความถูกต้อง"]

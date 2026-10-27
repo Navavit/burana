@@ -387,3 +387,21 @@ body.heat-mode #edit-loc, body.heat-mode .steps, body.heat-mode .timebase { disp
 .d-overview th:first-child { width: 22%; } .d-overview th:nth-child(2) { width: 14%; }
 .d-overview td.cnt { font-weight: 700; color: var(--ink); }
 #views { margin: 6px 0; }
+
+/* แบรนด์ BURANA และโลโก้หน่วยงาน (KU ก่อน SIS) */
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-mark { flex: none; border-radius: 10px; }
+.brand h1 { margin: 0; letter-spacing: .02em; }
+.brand-th { font-weight: 500; color: var(--ink-2); margin-left: 4px; }
+.tagline { margin: 2px 0 0; color: var(--ink-2); font-size: 13.5px; }
+.inst-logos { display: inline-flex; align-items: center; gap: 8px; background: #fff; border-radius: 8px; padding: 4px 8px; flex: none; }
+.inst-logos img { display: block; width: auto; }
+.foot-org { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 640px) {
+  .top-row { flex-wrap: wrap; }
+  .top-actions { width: 100%; justify-content: flex-end; }
+  .brand { flex: 1 1 100%; }
+  .top-actions .inst-logos { display: none; }      /* จอแคบ: แสดงโลโก้ที่ส่วนท้ายแทน */
+  .tagline { font-size: 12.5px; }
+  .brand-mark { width: 36px; height: 36px; }
+}

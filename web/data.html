@@ -3,20 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ข้อมูลและแหล่งที่มา</title>
+  <title>BURANA · ข้อมูลและแหล่งที่มา</title>
   <meta name="description" content="รายละเอียดของชุดข้อมูลทั้งหมดในระบบ: แหล่งที่มา จำนวนสถานี ความครอบคลุม ความถี่ที่ต้นทางปรับปรุง ความล่าช้า ช่วงเวลา และที่จัดเก็บ">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+  <link rel="icon" href="img/burana.svg" type="image/svg+xml">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="data-page">
   <header class="top">
     <div class="wrap top-row">
-      <div>
-        <h1>📚 ข้อมูลและแหล่งที่มา</h1>
-        <p class="sub" id="updated">กำลังโหลด…</p>
+      <div class="brand">
+        <a href="./"><img class="brand-mark" src="img/burana.svg" alt="BURANA หน้าหลัก" width="44" height="44"></a>
+        <div>
+          <h1>BURANA <span class="brand-th">ข้อมูลและแหล่งที่มา</span></h1>
+          <p class="sub" id="updated">กำลังโหลด…</p>
+        </div>
       </div>
-      <a class="ghost back" href="./">← หน้าหลัก</a>
+      <div class="top-actions"><a class="inst-logos" href="https://sis.ku.ac.th/" target="_blank" rel="noopener" title="วิทยาลัยบูรณาการศาสตร์ มหาวิทยาลัยเกษตรศาสตร์">
+          <img src="img/logo-ku.png" alt="มหาวิทยาลัยเกษตรศาสตร์" height="40"><img src="img/logo-sis.png" alt="วิทยาลัยบูรณาการศาสตร์" height="40"></a>
+        <a class="ghost back" href="./">← หน้าหลัก</a></div>
     </div>
   </header>
 
@@ -105,7 +110,8 @@
     </section>
   </main>
 
-  <footer class="wrap foot"><p><a href="./">← กลับหน้าหลัก</a> · <a id="repo-link" target="_blank" rel="noopener">รหัสต้นฉบับ</a></p></footer>
+  <footer class="wrap foot"><p class="foot-org"><span class="inst-logos"><img src="img/logo-ku.png" alt="มหาวิทยาลัยเกษตรศาสตร์" height="32"><img src="img/logo-sis.png" alt="วิทยาลัยบูรณาการศาสตร์" height="32"></span>
+      BURANA (บูรณา) พัฒนาโดย วิทยาลัยบูรณาการศาสตร์ มหาวิทยาลัยเกษตรศาสตร์</p><p><a href="./">← กลับหน้าหลัก</a> · <a id="repo-link" target="_blank" rel="noopener">รหัสต้นฉบับ</a></p></footer>
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="data.js"></script>
 </body>

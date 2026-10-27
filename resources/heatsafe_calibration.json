@@ -1,6 +1,6 @@
 {
  "generated": "2026-10-26T10:07+07:00",
- "source": "HEAT-SAFE Bangkok (โครงการวิจัย วช. 2570) — ทดสอบย้อนหลังใน Consolidated Weather (analysis/heat_forecast_backtest.ipynb)",
+ "source": "HEAT-SAFE Bangkok (โครงการวิจัย วช. 2570) — ทดสอบย้อนหลังใน BURANA (analysis/heat_forecast_backtest.ipynb)",
  "method": "Open-Meteo Previous Runs (≥24/72/168 h) vs hourly obs at Bangkok stations (wxdb: METAR via IEM, TMD synop via GHCNh/TMD API); bias = mean(forecast − observed) of daily max Heat Index, Mar–May",
  "period": "2024-01-01 – 2026-10-25",
  "stations": [

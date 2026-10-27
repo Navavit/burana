@@ -1,4 +1,4 @@
-# Consolidated Weather — แนวทางการทำงานใน workspace นี้
+# BURANA (เดิม Consolidated Weather) — แนวทางการทำงานใน workspace นี้
 
 ## บทบาท
 - ระบบกลางรวบรวมข้อมูลอากาศและแบบจำลองพยากรณ์ของประเทศไทย (ค่าตรวจวัด พยากรณ์ ข้อมูลย้อนหลัง การตรวจสอบความถูกต้อง) → ฐานข้อมูล wxdb บน GitHub Releases และหน้าเว็บ GitHub Pages

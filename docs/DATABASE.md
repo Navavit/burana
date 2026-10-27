@@ -1,6 +1,6 @@
 # ฐานข้อมูลอุตุนิยมวิทยาและแบบจำลองพยากรณ์อากาศของประเทศไทย (wxdb)
 
-ฐานข้อมูลระยะยาวของระบบ Consolidated Weather รวบรวม **ค่าตรวจวัดจากสถานี**, **ผลพยากรณ์จากแบบจำลองหลายระบบ** และ **ผลการตรวจสอบความถูกต้อง** ครอบคลุมทั้งประเทศไทย มีโครงสร้างตาราง (schema) และความสัมพันธ์ที่กำหนดชัดเจน เพื่อใช้ซ้ำในงานวิจัยต่อเนื่องได้ ทุกองค์ประกอบใช้บริการที่ไม่มีค่าใช้จ่าย
+ฐานข้อมูลระยะยาวของระบบ BURANA (บูรณา) รวบรวม **ค่าตรวจวัดจากสถานี**, **ผลพยากรณ์จากแบบจำลองหลายระบบ** และ **ผลการตรวจสอบความถูกต้อง** ครอบคลุมทั้งประเทศไทย มีโครงสร้างตาราง (schema) และความสัมพันธ์ที่กำหนดชัดเจน เพื่อใช้ซ้ำในงานวิจัยต่อเนื่องได้ ทุกองค์ประกอบใช้บริการที่ไม่มีค่าใช้จ่าย
 
 | หัวข้อ | รายละเอียด |
 |---|---|
@@ -666,7 +666,7 @@ python scripts/build_db_docs.py                # สร้าง ER และพ
 | `chirps` | [CHIRPS v2.0](https://www.chc.ucsb.edu/data/chirps) | UCSB Climate Hazards Center | satellite | CC BY 4.0 |
 | `imerg` | [NASA GPM IMERG V07 Final](https://gpm.nasa.gov/data/imerg) | NASA Goddard Space Flight Center | satellite | สาธารณสมบัติ (NASA) |
 | `gsmap` | [JAXA GSMaP (v8 operational / v6 reanalysis)](https://sharaku.eorc.jaxa.jp/GSMaP/) | JAXA Earth Observation Research Center | satellite | ใช้ได้โดยอ้างอิงแหล่งที่มา (JAXA) |
-| `heatsafe` | พยากรณ์ภัยความร้อนรายเขต (weather_heatsafe.py) | Consolidated Weather | model_api | CC BY 4.0 |
+| `heatsafe` | พยากรณ์ภัยความร้อนรายเขต (weather_heatsafe.py) | BURANA | model_api | CC BY 4.0 |
 <!-- DICT_END -->
 
 ## 6. ข้อจำกัดและแผนการพัฒนา
