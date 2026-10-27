@@ -18,3 +18,6 @@ analysis/out/
 .venv/
 build/
 *.egg-info/
+
+# ข้อเสนอขอทุน (มีงบประมาณและข้อมูลติดต่อ — เก็บในเครื่องเท่านั้น ไม่ขึ้น repository สาธารณะ)
+proposal/
