@@ -6,6 +6,7 @@
 
 ค่าจากโมเดลปัจจุบัน (Open-Meteo current) และเรดาร์ (RainViewer) หน้าเว็บดึงเองในเบราว์เซอร์เพื่อให้สดที่สุด
 """
+import json
 import math
 import time
 import xml.etree.ElementTree as ET
@@ -55,8 +56,56 @@ def _tmd_xml(url, cfg=None):
     raise RuntimeError(f"TMD ตอบกลับโดยไม่มีสถานี ({url})")
 
 
+# TMD ล้างรายการทั้งหมดตอนต้นรอบรายงาน แล้วทยอยเติมทีละสถานี (เช่น 19:05 ไม่มีเลย, 19:23 มี 74 สถานี)
+# จึงจำรายงานล่าสุดของแต่ละสถานีไว้ใน branch data แล้วรวมกับที่ดึงได้ทุกรอบ (ตัดรายงานที่เก่ากว่า LATEST_MAX_H)
+LATEST_DIR = core.ROOT / "archive" / "obs"
+LATEST_MAX_H = {"tmd3h": 12, "tmdday": 36}           # สรุปรายวัน 07:00 น. ใช้ได้ถึงสรุปของวันถัดไป
+
+
+def _archived(kind):
+    """รายงานล่าสุดของแต่ละสถานีจากคลังรายวัน (ใช้ครั้งแรกที่ยังไม่มีไฟล์ latest)"""
+    files = sorted((LATEST_DIR / kind).glob("*.csv"))[-2:]
+    if not files:
+        return []
+    df = pd.concat([pd.read_csv(f, dtype={"id": str}) for f in files], ignore_index=True)
+    df = df.sort_values("time").drop_duplicates("id", keep="last").astype(object)
+    return df.where(df.notna(), None).to_dict("records")
+
+
+def _with_latest(kind, fetch):
+    path = LATEST_DIR / f"latest_{kind}.json"
+    err = None
+    try:
+        rows = fetch()
+    except Exception as e:                       # ดึงไม่ได้/ว่างทั้งรอบ ก็ยังใช้รายงานล่าสุดที่จำไว้
+        rows, err = [], e
+    try:
+        old = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        old = _archived(kind)
+    by = {str(r["id"]): r for r in old}
+    for r in rows:
+        o = by.get(str(r["id"]))
+        if o is None or (r.get("time") or "") >= (o.get("time") or ""):
+            by[str(r["id"])] = r
+    cut = (pd.Timestamp.now(tz="Asia/Bangkok").tz_localize(None) - pd.Timedelta(hours=LATEST_MAX_H[kind])).isoformat()
+    out = [r for r in by.values() if (r.get("time") or "") >= cut]
+    if not out:
+        raise err or RuntimeError(f"ไม่มีรายงาน {kind}")
+    if rows:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
+    if err or len(rows) < len(out):
+        print(f"ℹ️ {kind}: รอบนี้ได้ {len(rows)} สถานี · ใช้รายงานล่าสุดที่จำไว้รวมเป็น {len(out)} สถานี")
+    return out
+
+
 def fetch_tmd_stations(cfg=None):
-    """ค่าตรวจวัดราย 3 ชม. ล่าสุดของสถานีอุตุฯ"""
+    """ค่าตรวจวัดราย 3 ชม. ล่าสุดของสถานีอุตุฯ (รวมรายงานล่าสุดที่จำไว้ของสถานีที่รอบนี้ยังไม่ส่ง)"""
+    return _with_latest("tmd3h", lambda: _fetch_tmd_stations(cfg))
+
+
+def _fetch_tmd_stations(cfg=None):
     root = _tmd_xml(TMD_OBS_URL, cfg)
     out = []
     for s in root.iter("Station"):
@@ -81,6 +130,10 @@ def fetch_tmd_stations(cfg=None):
 
 def fetch_tmd_today(cfg=None):
     """สรุปรายวันเวลา 07.00 น.: ฝน 24 ชม., อุณหภูมิสูงสุด/ต่ำสุด ของ 24 ชม. ที่ผ่านมา"""
+    return _with_latest("tmdday", lambda: _fetch_tmd_today(cfg))
+
+
+def _fetch_tmd_today(cfg=None):
     out = []
     for s in _tmd_xml(TMD_TODAY_URL, cfg).iter("Station"):
         g = lambda tag: (s.findtext(f".//{tag}") or "").strip()
