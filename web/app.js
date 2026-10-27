@@ -208,7 +208,8 @@ function markChips() {
       : !other && (c.id === "gps-chip" ? state.locIdx === -1 : Number(c.dataset.idx) === state.locIdx))));
   const ps = $("prov-select");
   ps.setAttribute("aria-selected", String(!other && state.locIdx !== -1));
-  ps.value = state.locIdx === -2 ? state.prov : state.locIdx >= 0 ? state.index.locations[state.locIdx].name : "";
+  // แท็บอื่น (ทั่วประเทศ ฯลฯ) ล้างค่าไว้ ไม่งั้นเลือกจังหวัดเดิมซ้ำจะไม่เกิด change และกลับมาไม่ได้
+  ps.value = other ? "" : state.locIdx === -2 ? state.prov : state.locIdx >= 0 ? state.index.locations[state.locIdx].name : "";
   $("gps-note").hidden = other || state.locIdx !== -1;
   $("prov-note").hidden = other || state.locIdx !== -2;
 }
@@ -434,15 +435,15 @@ function distKm(a, b, c, d) {
   return 12742 * Math.asin(Math.sqrt(x));
 }
 
-function makeWindows(T, now, M) {
+function makeWindows(times, now, M) {
   const w = M.hour_windows.map((n) => ({ label: `+${n} ชม.`, kind: "hour",
-    idx: T.flatMap((t, i) => (t > now && t <= now + n * HOUR ? [i] : [])), at: T.indexOf(now + n * HOUR) }));
+    idx: times.flatMap((t, i) => (t > now && t <= now + n * HOUR ? [i] : [])), at: times.indexOf(now + n * HOUR) }));
   const h0 = (M.day_start_hour || 0) * HOUR;              // วันอุตุนิยมวิทยา 07:00–07:00 น. (= 00–00 UTC)
   const today = now - ((now - h0) % DAY + DAY) % DAY;
   for (const d of M.day_leads) {
     const start = today + d * DAY, dt = new Date(start);
     const dd = String(dt.getUTCDate()).padStart(2, "0"), mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
-    w.push({ label: `D+${d} (${dd}/${mm})`, kind: "day", idx: T.flatMap((t, i) => (t > start && t <= start + DAY ? [i] : [])) });
+    w.push({ label: `D+${d} (${dd}/${mm})`, kind: "day", idx: times.flatMap((t, i) => (t > start && t <= start + DAY ? [i] : [])) });
   }
   return w;
 }
@@ -468,9 +469,9 @@ async function buildLocalPayload(lat, lon) {
     ...M.ensembles.map((e) => getJSON(q("https://ensemble-api.open-meteo.com/v1/ensemble",
       { hourly: "precipitation", models: e.key, forecast_days: M.forecast_days })).catch(() => null)),
   ]);
-  const T = fc.hourly.time.map(naiveMs);
+  const times = fc.hourly.time.map(naiveMs);
   const now = Math.floor((Date.now() + fc.utc_offset_seconds * 1000) / HOUR) * HOUR;
-  const wins = makeWindows(T, now, M);
+  const wins = makeWindows(times, now, M);
 
   // ข้อมูลรายชั่วโมง: data[ตัวแปร][ชื่อโมเดล] (ตัดโมเดลที่ไม่มีค่า)
   const data = {};
@@ -521,7 +522,7 @@ async function buildLocalPayload(lat, lon) {
       return j < 0 ? null : r1(median(Object.values(t.rows).map((r) => r[j]))); };
     const j = tables.rain.columns.indexOf(w.label);
     const vals = rainRows.map((r) => r[j]).filter((x) => x != null);
-    const start = T[w.idx[0]] - HOUR, end = start + DAY;
+    const start = times[w.idx[0]] - HOUR, end = start + DAY;
     const aqIdx = aqT.flatMap((t, i) => (t > start && t <= end ? [i] : []));
     const pmV = aqIdx.map((i) => aq.hourly.pm2_5[i]).filter((x) => x != null);
     const uvA = aqIdx.map((i) => aq.hourly.uv_index[i]).filter((x) => x != null);
@@ -535,7 +536,7 @@ async function buildLocalPayload(lat, lon) {
   });
 
   // รายชั่วโมง 7 วันสำหรับกราฟ
-  const hIdx = T.flatMap((t, i) => (t > now && t <= now + M.hourly_days * DAY ? [i] : []));
+  const hIdx = times.flatMap((t, i) => (t > now && t <= now + M.hourly_days * DAY ? [i] : []));
   const series = {};
   for (const v of M.hourly_vars) {
     series[v] = Object.fromEntries(Object.entries(data[v] || {}).map(([m, a]) => [m, hIdx.map((i) => a[i])]));
@@ -551,7 +552,7 @@ async function buildLocalPayload(lat, lon) {
     windows: wins.map((w) => w.label),
     models: Object.keys(data.precipitation).map((n) => ({ name: n, grid_km: (M.models.find((m) => m.name === n) || {}).grid_km })),
     tables, consensus, ensemble, brief,
-    hourly: { time: hIdx.map((i) => fc.hourly.time[i]), series, pm25: aq ? hIdx.map((i) => aqByT.get(T[i]) ?? null) : null },
+    hourly: { time: hIdx.map((i) => fc.hourly.time[i]), series, pm25: aq ? hIdx.map((i) => aqByT.get(times[i]) ?? null) : null },
     now: { station: nearest(state.nowObs.tmd), air: nearest(state.nowObs.air) },
   };
 }
