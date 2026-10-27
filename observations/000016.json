@@ -1,0 +1,11 @@
+{
+ "obs_time": "2026-09-30 17:48:00",
+ "location": "ตรงที่ฉันอยู่ (GPS)",
+ "lat": 13.81315,
+ "lon": 100.52078,
+ "rained": false,
+ "amount_mm": null,
+ "note": "",
+ "source": "issue#16",
+ "created_at": "2026-09-30 17:48:10"
+}
