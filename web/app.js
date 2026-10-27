@@ -972,7 +972,7 @@ function renderVerify() {
         T(" (พยากรณ์อุณหภูมิและฝนทุก 6 ชม.)", " (temperature and rain forecasts every 6 h)")),
       el("ul", { class: "cols" }, Object.keys(byProv).sort((a, b) => tx(a).localeCompare(tx(b), LANG)).map((pv) =>
         el("li", {}, el("b", {}, tx(pv)), ": ", byProv[pv].map(tx).join(", "))))) : null,
-    el("p", { class: "note" }, el("a", { href: "data.html#details" }, T("รายละเอียดของข้อมูลทั้งหมด →", "Details of all data →")))] :
+    el("p", { class: "note" }, el("a", { href: "data.html#details" }, T("รายละเอียดของข้อมูลทั้งหมด →", "Details of all data →")))].flat() :   // flat: รายการจุดตรวจของตำแหน่งหลักเป็น array ซ้อน
     src.key === "national" ? [el("div", {}, T("ทั่วประเทศ: สถานีอุตุฯ ~124 แห่ง (สรุป 07:00 น.) เทียบกับค่าที่ทายไว้ล่วงหน้าอย่างน้อย 24, 72, 168 ชม. ทุกชั่วโมง (Open-Meteo Previous Runs)",
       "Nationwide: ~124 weather stations (07:00 summary) compared with values forecast at least 24, 72 and 168 h ahead, every hour (Open-Meteo Previous Runs)"))] : []));
 }
