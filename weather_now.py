@@ -7,6 +7,7 @@
 ค่าจากโมเดลปัจจุบัน (Open-Meteo current) และเรดาร์ (RainViewer) หน้าเว็บดึงเองในเบราว์เซอร์เพื่อให้สดที่สุด
 """
 import math
+import time
 import xml.etree.ElementTree as ET
 
 import pandas as pd
@@ -41,10 +42,17 @@ def _f(text):
 def _tmd_xml(url, cfg=None):
     """XML ของ TMD Data API (uid/ukey เริ่มต้นเป็นคีย์สาธิตที่ TMD เผยแพร่ ตั้งเองได้ใน config)"""
     cfg = cfg or core.CFG
-    r = core.SESSION.get(url, params={"uid": cfg.get("tmd_obs_uid", "api"),
-                                      "ukey": cfg.get("tmd_obs_ukey", "api12345")}, timeout=60)
-    r.raise_for_status()
-    return ET.fromstring(r.content)
+    # ช่วงที่ TMD กำลังปรับข้อมูลรอบใหม่ (เช่น ~10 น.) API ตอบสำเร็จแต่ไม่มีสถานีเลย → รอแล้วลองใหม่
+    for attempt in range(3):
+        if attempt:
+            time.sleep(30)
+        r = core.SESSION.get(url, params={"uid": cfg.get("tmd_obs_uid", "api"),
+                                          "ukey": cfg.get("tmd_obs_ukey", "api12345")}, timeout=60)
+        r.raise_for_status()
+        root = ET.fromstring(r.content)
+        if root.find(".//Station") is not None:
+            return root
+    raise RuntimeError(f"TMD ตอบกลับโดยไม่มีสถานี ({url})")
 
 
 def fetch_tmd_stations(cfg=None):
