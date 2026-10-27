@@ -104,6 +104,15 @@
     <section aria-labelledby="h-ens">
       <h2 id="h-ens"><span lang="th">โอกาสฝน จากการรันโมเดลซ้ำหลายรอบ (ensemble, %)</span><span lang="en">Rain chance from repeated model runs (ensemble, %)</span> <small id="ens-sub"></small></h2>
       <div class="table-wrap" id="ens-table"></div>
+      <p class="note"><span lang="th">💡 <b>ensemble คืออะไร</b> — ปกติโมเดลรันครั้งเดียวได้คำตอบเดียว แต่ค่าเริ่มต้นที่วัดได้ไม่ละเอียดสมบูรณ์ ความคลาดเล็ก ๆ ขยายเป็นความต่างมากได้ในไม่กี่วัน
+        ระบบ ensemble จึงรันโมเดลเดียวกันหลายสิบครั้ง โดยปรับค่าเริ่มต้นต่างกันเล็กน้อย แล้วนับว่ากี่ครั้งที่ฝนตก
+        เช่น ECMWF รัน 51 ครั้ง ฝนตก 30 ครั้ง → โอกาสฝน ≈ 59% ·
+        <b>% สูง</b> = รันกี่ครั้งก็ได้ว่าตก (ค่อนข้างแน่นอน) · <b>40–60%</b> = ผลแตกเป็นสองทาง ยังไม่แน่นอน · <b>% ต่ำ</b> = แทบทุกครั้งได้ว่าไม่ตก ·
+        แต่ละแถวคือ 1 ระบบ (ต่างจากตารางฝนด้านบนที่เป็นโมเดลต่างกัน ตัวละ 1 คำตอบ) · “โอกาสฝน (ensemble)” ในส่วน ② คือค่าเฉลี่ยของทุกระบบ</span><span lang="en">💡 <b>What is an ensemble?</b> — A model normally runs once and gives one answer, but the starting measurements are never perfect, and small errors can grow into big differences within a few days.
+        An ensemble runs the same model dozens of times with slightly different starting conditions, then counts how many runs give rain.
+        For example, ECMWF runs 51 times and 30 give rain → rain chance ≈ 59% ·
+        <b>High %</b> = almost every run gives rain (fairly certain) · <b>40–60%</b> = the runs split, still uncertain · <b>Low %</b> = almost every run stays dry ·
+        each row is one ensemble system (unlike the rain table above, where each row is a different model with one answer) · “Rain chance (ensemble)” in section ② is the average of all systems</span></p>
     </section>
 
     <section aria-labelledby="h-hii" id="hii-section" hidden>
