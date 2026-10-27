@@ -177,6 +177,6 @@ def client_meta(cfg=None):
         "forecast_days": core.forecast_days(cfg), "rain_threshold_mm": cfg["rain_threshold_mm"],
         "hourly_vars": HOURLY_VARS, "hourly_days": HOURLY_DAYS, "max_station_km": weather_now.MAX_STATION_KM,
         # ตัวเลือก "จังหวัด" บนหน้าเว็บ: จุดตัวแทนเดียวกับพยากรณ์รายจังหวัดของส่วนทั่วประเทศ
-        "provinces": [{"name": r.province_th, "lat": float(r.lat), "lon": float(r.lon)}
+        "provinces": [{"name": r.province_th, "name_en": r.province_en, "lat": float(r.lat), "lon": float(r.lon)}
                       for r in pd.read_csv(core.ROOT / "resources" / "th_provinces.csv").itertuples()],
     }

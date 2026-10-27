@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BURANA · ข้อมูลและแหล่งที่มา</title>
-  <meta name="description" content="รายละเอียดของชุดข้อมูลทั้งหมดในระบบ: แหล่งที่มา จำนวนสถานี ความครอบคลุม ความถี่ที่ต้นทางปรับปรุง ความล่าช้า ช่วงเวลา และที่จัดเก็บ">
+  <meta name="title-en" content="BURANA · Data and sources">
+  <meta name="description" content="รายละเอียดของข้อมูลทุกชุดในระบบ: มาจากไหน มีกี่สถานี ครอบคลุมช่วงไหน อัปเดตบ่อยแค่ไหน และเก็บไว้ที่ใด · Every dataset in the system: source, stations, coverage, update frequency, delay and storage">
   <link rel="icon" href="img/burana.svg" type="image/svg+xml">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="style.css">
@@ -13,106 +14,155 @@
   <header class="top">
     <div class="wrap top-row">
       <div class="brand">
-        <a href="./"><img class="brand-mark" src="img/burana.svg" alt="BURANA หน้าหลัก" width="44" height="44"></a>
+        <a href="./"><img class="brand-mark" src="img/burana.svg" alt="BURANA หน้าหลัก" data-en-alt="BURANA home" width="44" height="44"></a>
         <div>
-          <h1>BURANA <span class="brand-th">ข้อมูลและแหล่งที่มา</span></h1>
-          <p class="sub" id="updated">กำลังโหลด…</p>
+          <h1>BURANA <span class="brand-th"><span lang="th">ข้อมูลและแหล่งที่มา</span><span lang="en">Data &amp; sources</span></span></h1>
+          <p class="sub" id="updated"><span lang="th">กำลังโหลด…</span><span lang="en">Loading…</span></p>
         </div>
       </div>
-      <div class="top-actions"><a class="inst-logos" href="https://sis.ku.ac.th/" target="_blank" rel="noopener" title="วิทยาลัยบูรณาการศาสตร์ มหาวิทยาลัยเกษตรศาสตร์">
-          <img src="img/logo-ku.png" alt="มหาวิทยาลัยเกษตรศาสตร์" height="40"><img src="img/logo-sis.png" alt="วิทยาลัยบูรณาการศาสตร์" height="40"></a>
-        <a class="ghost back" href="./">← หน้าหลัก</a></div>
+      <div class="top-actions"><a class="inst-logos" href="https://sis.ku.ac.th/" target="_blank" rel="noopener"
+          title="วิทยาลัยบูรณาการศาสตร์ มหาวิทยาลัยเกษตรศาสตร์" data-en-title="School of Integrated Science, Kasetsart University">
+          <img src="img/logo-ku.png" alt="มหาวิทยาลัยเกษตรศาสตร์" data-en-alt="Kasetsart University" height="40"><img src="img/logo-sis.png" alt="วิทยาลัยบูรณาการศาสตร์" data-en-alt="School of Integrated Science" height="40"></a>
+        <a class="ghost back" href="./">← <span lang="th">หน้าหลัก</span><span lang="en">Home</span></a>
+        <button id="lang" class="ghost" type="button">EN</button></div>
     </div>
   </header>
 
   <main class="wrap">
-    <p class="lead">รายละเอียดของทุกชุดข้อมูลที่ระบบรวบรวม ได้แก่ แหล่งที่มา จำนวนสถานีและความครอบคลุม ความละเอียดเชิงเวลา
-      <b>ความถี่ที่ต้นทางปรับปรุงข้อมูล</b> ความล่าช้าจากเวลาจริง ช่วงเวลาที่มีข้อมูล ที่จัดเก็บ และข้อจำกัด
-      ตัวเลขสถิติคำนวณใหม่ทุกชั่วโมงจากข้อมูลจริง · โครงสร้างฐานข้อมูลดูที่ <a id="db-doc" target="_blank" rel="noopener">docs/DATABASE.md</a></p>
+    <p class="lead"><span lang="th">รายละเอียดของข้อมูลทุกชุดที่ระบบเก็บ: มาจากไหน มีกี่สถานีและครอบคลุมพื้นที่ไหน ละเอียดแค่ไหน
+      <b>ต้นทางอัปเดตบ่อยแค่ไหน</b> ช้ากว่าเวลาจริงเท่าไร มีข้อมูลช่วงไหน เก็บไว้ที่ใด และมีข้อจำกัดอะไร
+      ตัวเลขคำนวณใหม่ทุกชั่วโมงจากข้อมูลจริง · โครงสร้างฐานข้อมูลดูที่</span><span lang="en">Details of every dataset the system collects: where it comes from, how many stations and what area, how detailed it is,
+      <b>how often the source updates</b>, how far behind real time it is, what period it covers, where it is stored, and its limits.
+      Numbers are recalculated every hour from the real data · database structure:</span> <a id="db-doc" target="_blank" rel="noopener">docs/DATABASE.md</a></p>
 
     <div class="d-cards" id="cards"></div>
 
-    <nav class="d-toc" aria-label="สารบัญ">
-      <a href="#datasets">① รายการชุดข้อมูล</a><a href="#merge">② การรวมข้อมูลสถานีจากหลายแหล่ง</a><a href="#models">③ รอบการประมวลผลของแบบจำลอง</a><a href="#map-sec">④ แผนที่เครือข่ายสถานี</a>
+    <nav class="d-toc" aria-label="สารบัญ" data-en-aria-label="Contents">
+      <a href="#datasets">① <span lang="th">รายการข้อมูล</span><span lang="en">Datasets</span></a><a href="#merge">② <span lang="th">รวมข้อมูลสถานีจากหลายแหล่ง</span><span lang="en">Merging station data from several sources</span></a><a href="#models">③ <span lang="th">แต่ละโมเดลรันเมื่อไร</span><span lang="en">When each model runs</span></a><a href="#map-sec">④ <span lang="th">แผนที่สถานี</span><span lang="en">Station map</span></a>
     </nav>
 
     <section id="datasets">
-      <h2>① รายการชุดข้อมูล</h2>
-      <div class="chips" id="views" role="tablist" aria-label="มุมมองของตาราง"></div>
+      <h2>① <span lang="th">รายการข้อมูล</span><span lang="en">Datasets</span></h2>
+      <div class="chips" id="views" role="tablist" aria-label="มุมมองของตาราง" data-en-aria-label="Table view"></div>
       <p class="note" id="view-note"></p>
       <div class="table-wrap" id="ds-table"></div>
     </section>
 
     <section id="merge">
-      <h2>② การรวมข้อมูลสถานีจากหลายแหล่ง</h2>
-      <p class="note">สถานีอุตุนิยมวิทยาแห่งเดียวกันมีข้อมูลจาก 3 แหล่ง ได้แก่ API ของกรมอุตุนิยมวิทยา NOAA GHCNh และ NOAA GSOD
-        ระบบรวมทั้งสามแหล่งไว้ที่จุดเดียวกันเพื่อให้ได้อนุกรมเวลาต่อเนื่องตั้งแต่ปี 2543 โดยมีหลักการดังนี้</p>
-      <ol class="d-list">
-        <li><b>จุดเดียวกัน (รหัส WMO)</b> — รหัสสถานี GSOD/ISD ประกอบด้วย USAF 6 หลัก + WBAN 5 หลัก เช่น <code>484550-99999</code>
-          เมื่อ USAF ลงท้ายด้วย 0 และ WBAN เป็น 99999 ตัวเลข 5 หลักแรกคือรหัส WMO ของกรมอุตุนิยมวิทยา จึงบันทึกเป็น
-          <code>site_id = tmd:48455</code> เช่นเดียวกับ API ของกรม ส่วน GHCNh ใช้รหัส WMO ที่ระบุในรายชื่อสถานี
+      <h2>② <span lang="th">รวมข้อมูลสถานีจากหลายแหล่ง</span><span lang="en">Merging station data from several sources</span></h2>
+      <p class="note" lang="th">สถานีอุตุนิยมวิทยาแห่งเดียวกันมีข้อมูลจาก 3 แหล่ง คือ API ของกรมอุตุนิยมวิทยา, NOAA GHCNh และ NOAA GSOD
+        ระบบรวมทั้งสามแหล่งไว้ที่สถานีเดียวกัน เพื่อให้มีข้อมูลต่อเนื่องตั้งแต่ปี 2543 ตามหลักนี้</p>
+      <p class="note" lang="en">The same weather station has data from 3 sources: the Thai Meteorological Department API, NOAA GHCNh and NOAA GSOD.
+        The system joins all three at one station to get a continuous record since 2000, as follows</p>
+      <ol class="d-list" lang="th">
+        <li><b>สถานีเดียวกัน (รหัส WMO)</b> — รหัสสถานี GSOD/ISD คือ USAF 6 หลัก + WBAN 5 หลัก เช่น <code>484550-99999</code>
+          ถ้า USAF ลงท้ายด้วย 0 และ WBAN เป็น 99999 ตัวเลข 5 หลักแรกคือรหัส WMO ของกรมอุตุนิยมวิทยา จึงบันทึกเป็น
+          <code>site_id = tmd:48455</code> เหมือนกับ API ของกรม ส่วน GHCNh ใช้รหัส WMO ในรายชื่อสถานี
           (สถานีที่ไม่มีรหัส WMO ใช้ <code>ghcnh:&lt;ID&gt;</code> หรือ <code>gsod:&lt;ID&gt;</code>) ·
           ตรวจเมื่อ ต.ค. 2569: สถานี GSOD ปี 2543 ทั้ง 66 สถานี และปี 2567 จำนวน 121 จาก 132 สถานี ตรงกับสถานีปัจจุบันของกรม</li>
-        <li><b>ช่วงเวลาเดียวกัน</b> — วันของ GSOD (00–24 UTC) เท่ากับวันอุตุนิยมวิทยาของไทย 07:00–07:00 น. ซึ่งเป็นช่วงของสรุปรายวันของกรม
-          ทุกแหล่งบันทึกเวลาเป็น UTC ณ <b>ปลายช่วง</b> พร้อมความยาวช่วง (<code>period_h</code>) เช่น ฝน 24 ชม. ถึง 07:00 น. วันที่ 24 = <code>time 00:00Z วันที่ 24, period_h 24</code></li>
+        <li><b>ช่วงเวลาเดียวกัน</b> — 1 วันของ GSOD (00–24 UTC) เท่ากับวันอุตุนิยมวิทยาของไทย 07:00–07:00 น. ซึ่งเป็นช่วงเดียวกับสรุปรายวันของกรม
+          ทุกแหล่งบันทึกเวลาเป็น UTC ที่ <b>ปลายช่วง</b> พร้อมความยาวช่วง (<code>period_h</code>) เช่น ฝน 24 ชม. ถึง 07:00 น. วันที่ 24 = <code>time 00:00Z วันที่ 24, period_h 24</code></li>
         <li><b>ตัวแปรและหน่วยเดียวกัน</b> — แปลงเป็นหน่วย SI ก่อนบันทึก (ตารางด้านล่าง)</li>
-        <li><b>เก็บทุกแหล่ง แล้วเลือกค่าเดียวเมื่อใช้งาน</b> — คีย์หลักของตาราง <code>observation</code> รวม <code>source_id</code>
-          จึงตรวจสอบย้อนกลับได้ว่าค่ามาจากแหล่งใด ส่วน view <code>observation_best</code> เลือกค่าเดียวต่อสถานี–เวลา–ตัวแปร–ช่วงสะสม
+        <li><b>เก็บทุกแหล่ง แล้วค่อยเลือกค่าเดียวตอนใช้</b> — คีย์หลักของตาราง <code>observation</code> มี <code>source_id</code>
+          จึงย้อนดูได้ว่าค่ามาจากแหล่งไหน ส่วน view <code>observation_best</code> เลือกค่าเดียวต่อสถานี–เวลา–ตัวแปร–ช่วงสะสม
           ตามลำดับ <b>กรมอุตุนิยมวิทยา → GHCNh → GSOD</b> (ค่าจาก API ของกรมกับ GHCNh ในช่วงที่ซ้อนกันตรงกัน ~99%)</li>
       </ol>
-      <div class="table-wrap"><table class="d-table">
+      <ol class="d-list" lang="en">
+        <li><b>Same station (WMO code)</b> — a GSOD/ISD station ID is 6-digit USAF + 5-digit WBAN, e.g. <code>484550-99999</code>.
+          When USAF ends in 0 and WBAN is 99999, the first 5 digits are the TMD WMO code, so it is stored as
+          <code>site_id = tmd:48455</code>, the same as the TMD API. GHCNh uses the WMO code in its station list
+          (stations without a WMO code use <code>ghcnh:&lt;ID&gt;</code> or <code>gsod:&lt;ID&gt;</code>) ·
+          checked Oct 2026: all 66 GSOD stations of 2000, and 121 of 132 in 2024, match current TMD stations</li>
+        <li><b>Same time period</b> — a GSOD day (00–24 UTC) equals the Thai climate day 07:00–07:00, the period of the TMD daily summary.
+          Every source stores time in UTC at the <b>end of the period</b>, with its length (<code>period_h</code>), e.g. 24-hour rain to 07:00 on the 24th = <code>time 00:00Z on the 24th, period_h 24</code></li>
+        <li><b>Same variables and units</b> — converted to SI units before storing (table below)</li>
+        <li><b>Keep every source, choose one value when using it</b> — the primary key of <code>observation</code> includes <code>source_id</code>,
+          so you can always trace where a value came from. The view <code>observation_best</code> picks one value per station–time–variable–period
+          in the order <b>TMD → GHCNh → GSOD</b> (TMD API and GHCNh agree ~99% where they overlap)</li>
+      </ol>
+      <div class="table-wrap"><table class="d-table" lang="th">
         <thead><tr><th>ตัวแปร (<code>var_id</code>)</th><th>API กรมอุตุนิยมวิทยา</th><th>NOAA GHCNh</th><th>NOAA GSOD</th></tr></thead>
         <tbody>
-          <tr><td>ฝน (<code>precip</code>)</td><td>ราย 3 ชม. และ 24 ชม. (มม.)</td><td>1/3/6/12/24 ชม. (มม.)</td><td>24 ชม. (นิ้ว → มม.)</td></tr>
+          <tr><td>ฝน (<code>precip</code>)</td><td>ทุก 3 ชม. และ 24 ชม. (มม.)</td><td>1/3/6/12/24 ชม. (มม.)</td><td>24 ชม. (นิ้ว → มม.)</td></tr>
           <tr><td>อุณหภูมิสูงสุด/ต่ำสุด (<code>tmax</code>, <code>tmin</code>)</td><td>รายวัน (°C)</td><td>–</td><td>รายวัน (°F → °C)</td></tr>
-          <tr><td>อุณหภูมิ (<code>t2m</code>)</td><td>ราย 3 ชม.</td><td>รายชั่วโมง</td><td>เฉลี่ยรายวัน (°F → °C)</td></tr>
-          <tr><td>จุดน้ำค้าง / ความชื้นสัมพัทธ์ (<code>td2m</code>, <code>rh2m</code>)</td><td>ราย 3 ชม.</td><td>รายชั่วโมง</td><td>จุดน้ำค้างเฉลี่ยรายวัน</td></tr>
-          <tr><td>ความกดอากาศ, ลม, ทัศนวิสัย</td><td>ราย 3 ชม.</td><td>รายชั่วโมง</td><td>เฉลี่ยรายวัน (นอต → ม./วินาที, ไมล์ → กม.)</td></tr>
+          <tr><td>อุณหภูมิ (<code>t2m</code>)</td><td>ทุก 3 ชม.</td><td>รายชั่วโมง</td><td>เฉลี่ยรายวัน (°F → °C)</td></tr>
+          <tr><td>จุดน้ำค้าง / ความชื้น (<code>td2m</code>, <code>rh2m</code>)</td><td>ทุก 3 ชม.</td><td>รายชั่วโมง</td><td>จุดน้ำค้างเฉลี่ยรายวัน</td></tr>
+          <tr><td>ความกดอากาศ, ลม, ทัศนวิสัย</td><td>ทุก 3 ชม.</td><td>รายชั่วโมง</td><td>เฉลี่ยรายวัน (นอต → ม./วินาที, ไมล์ → กม.)</td></tr>
+        </tbody></table>
+        <table class="d-table" lang="en">
+        <thead><tr><th>Variable (<code>var_id</code>)</th><th>TMD API</th><th>NOAA GHCNh</th><th>NOAA GSOD</th></tr></thead>
+        <tbody>
+          <tr><td>Rain (<code>precip</code>)</td><td>3-hour and 24-hour (mm)</td><td>1/3/6/12/24 h (mm)</td><td>24 h (inch → mm)</td></tr>
+          <tr><td>Max/min temperature (<code>tmax</code>, <code>tmin</code>)</td><td>Daily (°C)</td><td>–</td><td>Daily (°F → °C)</td></tr>
+          <tr><td>Temperature (<code>t2m</code>)</td><td>Every 3 h</td><td>Hourly</td><td>Daily mean (°F → °C)</td></tr>
+          <tr><td>Dew point / humidity (<code>td2m</code>, <code>rh2m</code>)</td><td>Every 3 h</td><td>Hourly</td><td>Daily mean dew point</td></tr>
+          <tr><td>Pressure, wind, visibility</td><td>Every 3 h</td><td>Hourly</td><td>Daily mean (knot → m/s, mile → km)</td></tr>
         </tbody></table></div>
-      <h3>ช่วงเวลาที่แต่ละแหล่งครอบคลุม (ต่อหนึ่งสถานี)</h3>
-      <div class="table-wrap"><table class="d-table">
-        <thead><tr><th>ช่วงเวลา</th><th>ค่ารายวัน</th><th>ค่ารายชั่วโมง / ราย 3 ชม.</th></tr></thead>
+      <h3><span lang="th">แต่ละแหล่งครอบคลุมช่วงไหน (ต่อหนึ่งสถานี)</span><span lang="en">Which source covers which period (per station)</span></h3>
+      <div class="table-wrap"><table class="d-table" lang="th">
+        <thead><tr><th>ช่วงเวลา</th><th>ค่ารายวัน</th><th>ค่ารายชั่วโมง / ทุก 3 ชม.</th></tr></thead>
         <tbody>
           <tr><td>ม.ค. 2543 – ส.ค. 2568</td><td>GSOD</td><td>GHCNh</td></tr>
           <tr><td>ส.ค. 2568 – ก.ย. 2569</td><td>GHCNh (ฝน 24 ชม. เท่านั้น ไม่มี tmax/tmin)</td><td>GHCNh</td></tr>
           <tr><td>27 ก.ย. 2569 – ปัจจุบัน</td><td>API กรมอุตุนิยมวิทยา (+ GHCNh)</td><td>API กรมอุตุนิยมวิทยา (+ GHCNh)</td></tr>
+        </tbody></table>
+        <table class="d-table" lang="en">
+        <thead><tr><th>Period</th><th>Daily values</th><th>Hourly / 3-hourly values</th></tr></thead>
+        <tbody>
+          <tr><td>Jan 2000 – Aug 2025</td><td>GSOD</td><td>GHCNh</td></tr>
+          <tr><td>Aug 2025 – Sep 2026</td><td>GHCNh (24-hour rain only, no tmax/tmin)</td><td>GHCNh</td></tr>
+          <tr><td>27 Sep 2026 – now</td><td>TMD API (+ GHCNh)</td><td>TMD API (+ GHCNh)</td></tr>
         </tbody></table></div>
-      <h3>ข้อควรระวัง</h3>
-      <ul class="d-list">
-        <li>ฝนรายวันของ GSOD: สถานีไทยไม่ส่งรายงานฝนในวันที่ฝนไม่ตก (flag I) ระบบถือเป็น 0 มม. — ตรวจกับ CHIRPS ปี 2567 (40 สถานี) วัน flag I มีฝน &gt; 5 มม. ใน CHIRPS เพียง 5.6% เทียบกับ 45% ของวันที่มีรายงาน · ค่าที่ไม่ครบวัน (flag A, B, C, E, H) ถูกตัดออก</li>
-        <li>อุณหภูมิสูงสุด/ต่ำสุดของ GSOD คำนวณจากรายงานรายชั่วโมงหรือราย 3 ชม. ส่วนของกรมได้จากเทอร์โมมิเตอร์สูงสุด–ต่ำสุดโดยตรง ค่าของ GSOD จึงอาจต่างเล็กน้อย</li>
-        <li>ค่าเฉลี่ยรายวันของ GSOD ใช้เฉพาะวันที่มีการตรวจวัด ≥ 4 ครั้ง · ค่าของ GHCNh ใช้เฉพาะที่ผ่านการควบคุมคุณภาพ</li>
+      <h3><span lang="th">ข้อควรระวัง</span><span lang="en">Caveats</span></h3>
+      <ul class="d-list" lang="th">
+        <li>ฝนรายวันของ GSOD: สถานีในไทยไม่ส่งรายงานฝนในวันที่ฝนไม่ตก (flag I) ระบบถือเป็น 0 มม. — ตรวจกับ CHIRPS ปี 2567 (40 สถานี) วัน flag I มีฝน &gt; 5 มม. ใน CHIRPS เพียง 5.6% เทียบกับ 45% ของวันที่มีรายงาน · ค่าที่ไม่ครบวัน (flag A, B, C, E, H) ถูกตัดออก</li>
+        <li>อุณหภูมิสูงสุด/ต่ำสุดของ GSOD คิดจากรายงานรายชั่วโมงหรือทุก 3 ชม. ส่วนของกรมวัดจากเทอร์โมมิเตอร์สูงสุด–ต่ำสุดโดยตรง ค่าของ GSOD จึงอาจต่างเล็กน้อย</li>
+        <li>ค่าเฉลี่ยรายวันของ GSOD ใช้เฉพาะวันที่วัดอย่างน้อย 4 ครั้ง · ค่าของ GHCNh ใช้เฉพาะที่ผ่านการตรวจคุณภาพแล้ว</li>
         <li>จำนวนสถานีเปลี่ยนตามปี: GSOD 66 สถานี (2543) → 133 สถานี (2553) · GHCNh 46 → 101 → ~160 สถานี</li>
+      </ul>
+      <ul class="d-list" lang="en">
+        <li>GSOD daily rain: Thai stations send no rain report on dry days (flag I), which the system treats as 0 mm — checked against CHIRPS for 2024 (40 stations): only 5.6% of flag-I days had &gt; 5 mm in CHIRPS, versus 45% of reported days · incomplete days (flags A, B, C, E, H) are removed</li>
+        <li>GSOD max/min temperature is derived from hourly or 3-hourly reports, while TMD reads max/min thermometers directly, so GSOD can differ slightly</li>
+        <li>GSOD daily means are used only for days with at least 4 observations · only quality-controlled GHCNh values are used</li>
+        <li>Station counts change by year: GSOD 66 stations (2000) → 133 (2010) · GHCNh 46 → 101 → ~160</li>
       </ul>
     </section>
 
     <section id="models">
-      <h2>③ รอบการประมวลผลของแบบจำลองพยากรณ์</h2>
-      <p class="note">ข้อมูลจาก metadata ของ Open-Meteo (ปรับปรุงทุกชั่วโมง) · <b>ล่าช้า</b> = เวลาที่รอบล่าสุดพร้อมใช้งาน − เวลาเริ่มต้นของรอบ ·
-        แบบจำลองที่ไม่มี metadata ใช้ค่าประมาณ</p>
+      <h2>③ <span lang="th">แต่ละโมเดลรันเมื่อไร</span><span lang="en">When each model runs</span></h2>
+      <p class="note"><span lang="th">ข้อมูลจาก metadata ของ Open-Meteo (อัปเดตทุกชั่วโมง) · <b>ช้า</b> = เวลาที่รอบล่าสุดพร้อมใช้ − เวลาที่รอบนั้นเริ่ม ·
+        โมเดลที่ไม่มี metadata ใช้ค่าประมาณ</span><span lang="en">From Open-Meteo metadata (updated hourly) · <b>Delay</b> = when the latest run became available − when that run started ·
+        models without metadata use estimates</span></p>
       <div class="table-wrap" id="models-table"></div>
     </section>
 
     <section id="map-sec">
-      <h2>④ แผนที่เครือข่ายสถานี</h2>
-      <div class="chips" id="layers" role="group" aria-label="ชั้นข้อมูล"></div>
-      <div id="dmap" class="map" role="region" aria-label="แผนที่สถานี"></div>
+      <h2>④ <span lang="th">แผนที่สถานี</span><span lang="en">Station map</span></h2>
+      <div class="chips" id="layers" role="group" aria-label="ชั้นข้อมูล" data-en-aria-label="Layers"></div>
+      <div id="dmap" class="map" role="region" aria-label="แผนที่สถานี" data-en-aria-label="Station map"></div>
       <p class="note" id="map-note"></p>
     </section>
 
     <section id="cite">
-      <h2>เงื่อนไขการใช้และการอ้างอิง</h2>
-      <ul class="d-list">
-        <li>ข้อมูลแต่ละชุดอยู่ภายใต้สัญญาอนุญาตของหน่วยงานต้นทาง (ระบุในตารางข้างต้น) การเผยแพร่ต่อหรือใช้ในงานวิจัยควรอ้างอิงหน่วยงานต้นทางตามเงื่อนไขนั้น</li>
-        <li>ข้อมูลพยากรณ์จาก Open-Meteo ใช้ได้เฉพาะงานที่ไม่ใช่เชิงพาณิชย์ และต้องแสดงที่มา “Weather data by Open-Meteo.com” (CC BY 4.0)</li>
-        <li>ผลพยากรณ์เป็นผลจากแบบจำลองเชิงตัวเลข มิใช่ประกาศอย่างเป็นทางการของหน่วยงานใด</li>
+      <h2><span lang="th">เงื่อนไขการใช้และการอ้างอิง</span><span lang="en">Terms of use and citation</span></h2>
+      <ul class="d-list" lang="th">
+        <li>ข้อมูลแต่ละชุดใช้สัญญาอนุญาตของหน่วยงานต้นทาง (ดูในตารางด้านบน) ถ้าเผยแพร่ต่อหรือใช้ในงานวิจัย ให้อ้างอิงหน่วยงานต้นทางตามเงื่อนไขนั้น</li>
+        <li>พยากรณ์จาก Open-Meteo ใช้ได้เฉพาะงานที่ไม่ใช่เชิงพาณิชย์ และต้องแสดงที่มา “Weather data by Open-Meteo.com” (CC BY 4.0)</li>
+        <li>พยากรณ์มาจากโมเดลคอมพิวเตอร์ ไม่ใช่ประกาศทางการของหน่วยงานใด</li>
+      </ul>
+      <ul class="d-list" lang="en">
+        <li>Each dataset is under its source agency's licence (shown in the table above). When sharing it or using it in research, cite the source agency as required</li>
+        <li>Open-Meteo forecasts are for non-commercial use only and must show “Weather data by Open-Meteo.com” (CC BY 4.0)</li>
+        <li>Forecasts come from computer models and are not official announcements of any agency</li>
       </ul>
     </section>
   </main>
 
-  <footer class="wrap foot"><p class="foot-org"><span class="inst-logos"><img src="img/logo-ku.png" alt="มหาวิทยาลัยเกษตรศาสตร์" height="32"><img src="img/logo-sis.png" alt="วิทยาลัยบูรณาการศาสตร์" height="32"></span>
-      BURANA (บูรณา) พัฒนาโดย วิทยาลัยบูรณาการศาสตร์ มหาวิทยาลัยเกษตรศาสตร์</p><p><a href="./">← กลับหน้าหลัก</a> · <a id="repo-link" target="_blank" rel="noopener">รหัสต้นฉบับ</a></p></footer>
+  <footer class="wrap foot"><p class="foot-org"><span class="inst-logos"><img src="img/logo-ku.png" alt="มหาวิทยาลัยเกษตรศาสตร์" data-en-alt="Kasetsart University" height="32"><img src="img/logo-sis.png" alt="วิทยาลัยบูรณาการศาสตร์" data-en-alt="School of Integrated Science" height="32"></span>
+      <span lang="th">BURANA (บูรณา) พัฒนาโดย วิทยาลัยบูรณาการศาสตร์ มหาวิทยาลัยเกษตรศาสตร์</span><span lang="en">BURANA is developed by the School of Integrated Science, Kasetsart University</span></p>
+    <p><a href="./">← <span lang="th">กลับหน้าหลัก</span><span lang="en">Back to home</span></a> · <a id="repo-link" target="_blank" rel="noopener"><span lang="th">โค้ด</span><span lang="en">Source code</span></a></p></footer>
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="i18n.js"></script>
   <script src="data.js"></script>
 </body>
 </html>

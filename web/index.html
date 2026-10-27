@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BURANA บูรณา · ฐานข้อมูลภูมิอากาศและแบบจำลองพยากรณ์อากาศของประเทศไทย</title>
-  <meta name="description" content="ระบบเปรียบเทียบพยากรณ์ฝน อุณหภูมิ และดัชนีความร้อนจากแบบจำลองเชิงตัวเลขหลายระบบ พร้อมการตรวจสอบความถูกต้องกับค่าตรวจวัดในประเทศไทย ปรับปรุงทุกชั่วโมง">
+  <title>BURANA บูรณา · ฐานข้อมูลอากาศและผลพยากรณ์ของประเทศไทย</title>
+  <meta name="title-en" content="BURANA · Thailand weather and forecast database">
+  <meta name="description" content="ดูพยากรณ์ฝน อุณหภูมิ และความร้อนจากหลายโมเดล พร้อมสถิติว่าแต่ละโมเดลแม่นแค่ไหนในประเทศไทย ปรับปรุงทุกชั่วโมง · Rain, temperature and heat forecasts from many models, checked against Thai weather stations, updated hourly">
   <link rel="icon" href="img/burana.svg" type="image/svg+xml">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="style.css">
@@ -16,110 +17,115 @@
         <img class="brand-mark" src="img/burana.svg" alt="" width="44" height="44">
         <div>
           <h1>BURANA <span class="brand-th">บูรณา</span></h1>
-          <p class="tagline">ฐานข้อมูลเปิดแบบบูรณาการของข้อมูลภูมิอากาศและแบบจำลองพยากรณ์อากาศของประเทศไทย</p>
-          <p class="sub" id="updated">กำลังโหลด…</p>
+          <p class="tagline"><span lang="th">ฐานข้อมูลเปิดที่รวมข้อมูลอากาศและผลพยากรณ์ของประเทศไทยไว้ในที่เดียว</span><span lang="en">An open database that brings Thailand's weather data and forecasts together in one place</span></p>
+          <p class="sub" id="updated"><span lang="th">กำลังโหลด…</span><span lang="en">Loading…</span></p>
         </div>
       </div>
-      <div class="top-actions"><a class="inst-logos" href="https://sis.ku.ac.th/" target="_blank" rel="noopener" title="วิทยาลัยบูรณาการศาสตร์ มหาวิทยาลัยเกษตรศาสตร์">
-          <img src="img/logo-ku.png" alt="มหาวิทยาลัยเกษตรศาสตร์" height="40"><img src="img/logo-sis.png" alt="วิทยาลัยบูรณาการศาสตร์" height="40"></a>
-        <a class="ghost data-link" href="data.html">📚 ข้อมูลและแหล่งที่มา</a>
-      <button id="theme" class="ghost" type="button" aria-label="สลับโหมดสว่าง/มืด">🌓</button></div>
+      <div class="top-actions"><a class="inst-logos" href="https://sis.ku.ac.th/" target="_blank" rel="noopener"
+          title="วิทยาลัยบูรณาการศาสตร์ มหาวิทยาลัยเกษตรศาสตร์" data-en-title="School of Integrated Science, Kasetsart University">
+          <img src="img/logo-ku.png" alt="มหาวิทยาลัยเกษตรศาสตร์" data-en-alt="Kasetsart University" height="40"><img src="img/logo-sis.png" alt="วิทยาลัยบูรณาการศาสตร์" data-en-alt="School of Integrated Science" height="40"></a>
+        <a class="ghost data-link" href="data.html">📚 <span lang="th">ข้อมูลและแหล่งที่มา</span><span lang="en">Data &amp; sources</span></a>
+        <button id="lang" class="ghost" type="button">EN</button>
+        <button id="theme" class="ghost" type="button" aria-label="สลับโหมดสว่าง/มืด" data-en-aria-label="Toggle light/dark mode">🌓</button></div>
     </div>
   </header>
 
   <main class="wrap">
     <section class="rainbar" id="rainbar" aria-labelledby="rb-q" hidden>
       <div class="rb-top">
-        <p id="rb-q" class="rb-q">รายงานสภาพฝนขณะนี้ ณ <b id="rb-loc">…</b></p>
-        <button id="rb-gps" class="ghost small" type="button">📍 ใช้ GPS</button>
+        <p id="rb-q" class="rb-q"><span lang="th">ตอนนี้ฝนตกไหม ที่</span><span lang="en">Is it raining now at</span> <b id="rb-loc">…</b></p>
+        <button id="rb-gps" class="ghost small" type="button">📍 GPS</button>
       </div>
       <div class="rb-btns">
-        <button id="rb-rain" class="big rain" type="button">🌧️ มีฝน</button>
-        <button id="rb-dry" class="big dry" type="button">☀️ ไม่มีฝน</button>
+        <button id="rb-rain" class="big rain" type="button">🌧️ <span lang="th">ฝนตก</span><span lang="en">Raining</span></button>
+        <button id="rb-dry" class="big dry" type="button">☀️ <span lang="th">ฝนไม่ตก</span><span lang="en">Not raining</span></button>
       </div>
       <p class="rb-hint" id="rb-hint"></p>
     </section>
 
-    <nav class="filters" aria-label="ตัวกรอง">
-      <div class="chips" id="locations" role="tablist" aria-label="ตำแหน่ง"></div>
-      <a id="edit-loc" class="link" target="_blank" rel="noopener">＋ เพิ่ม/แก้ไขตำแหน่ง</a>
+    <nav class="filters" aria-label="ตัวกรอง" data-en-aria-label="Filters">
+      <div class="chips" id="locations" role="tablist" aria-label="ตำแหน่ง" data-en-aria-label="Location"></div>
     </nav>
-    <p class="note" id="gps-note" hidden>📍 ประมวลผลพยากรณ์ ณ พิกัดของผู้ใช้ภายในเบราว์เซอร์ (ส่งพิกัดไปยัง Open-Meteo โดยตรง ระบบไม่จัดเก็บพิกัด) · ใช้แบบจำลองระดับโลกทั้งหมดและระบบ ensemble ·
-      ไม่รวม TMD WRF และ Google Weather (ต้องใช้รหัสเข้าถึง) · ค่าตรวจวัดใช้สถานีที่ใกล้ที่สุด</p>
-    <p class="note" id="prov-note" hidden>🏙️ พยากรณ์ ณ จุดตัวแทนของจังหวัด ประมวลผลภายในเบราว์เซอร์จาก Open-Meteo · ใช้แบบจำลองระดับโลกทั้งหมดและระบบ ensemble ·
-      ไม่รวม TMD WRF และ Google Weather (ต้องใช้รหัสเข้าถึง) · ค่าตรวจวัดใช้สถานีที่ใกล้ที่สุด</p>
+    <p class="note" id="gps-note" hidden><span lang="th">📍 พยากรณ์ ณ ตำแหน่งของคุณ คำนวณในเบราว์เซอร์ (ส่งพิกัดไปที่ Open-Meteo โดยตรง ระบบไม่เก็บพิกัดของคุณ) ·
+      ไม่มี TMD WRF และ Google Weather เพราะต้องใช้รหัสเข้าถึง · ค่าที่วัดได้มาจากสถานีที่ใกล้ที่สุด</span><span lang="en">📍 Forecast for your location, calculated in your browser (your coordinates go straight to Open-Meteo; we do not store them) ·
+      TMD WRF and Google Weather are not included because they need an access key · Measurements come from the nearest station</span></p>
+    <p class="note" id="prov-note" hidden><span lang="th">🏙️ พยากรณ์ ณ จุดกลางของจังหวัด คำนวณในเบราว์เซอร์จาก Open-Meteo ·
+      ไม่มี TMD WRF และ Google Weather เพราะต้องใช้รหัสเข้าถึง · ค่าที่วัดได้มาจากสถานีที่ใกล้ที่สุด</span><span lang="en">🏙️ Forecast for a central point of the province, calculated in your browser from Open-Meteo ·
+      TMD WRF and Google Weather are not included because they need an access key · Measurements come from the nearest station</span></p>
 
-    <nav class="steps" id="steps" aria-label="ลำดับเนื้อหา">
-      <a href="#step-1"><b>①</b> สภาพปัจจุบัน</a>
-      <a href="#step-2"><b>②</b> ผลพยากรณ์</a>
-      <a href="#step-3"><b>③</b> รายแบบจำลอง</a>
-      <a href="#step-4"><b>④</b> อนุกรมรายชั่วโมง</a>
-      <a href="#step-5"><b>⑤</b> แหล่งที่มาและการตรวจสอบ</a>
+    <nav class="steps" id="steps" aria-label="ลำดับเนื้อหา" data-en-aria-label="Sections">
+      <a href="#step-1"><b>①</b> <span lang="th">ตอนนี้</span><span lang="en">Now</span></a>
+      <a href="#step-2"><b>②</b> <span lang="th">พยากรณ์</span><span lang="en">Forecast</span></a>
+      <a href="#step-3"><b>③</b> <span lang="th">แยกตามโมเดล</span><span lang="en">By model</span></a>
+      <a href="#step-4"><b>④</b> <span lang="th">กราฟรายชั่วโมง</span><span lang="en">Hourly charts</span></a>
+      <a href="#step-5"><b>⑤</b> <span lang="th">โมเดลไหนแม่น</span><span lang="en">Which model is right?</span></a>
     </nav>
     <p class="note timebase" id="timebase"></p>
 
     <section id="step-1" aria-labelledby="h-now">
-      <h2 id="h-now"><span class="step-no" aria-hidden="true">①</span> สภาพอากาศปัจจุบัน <small>ค่าตรวจวัดจากสถานีที่ใกล้ที่สุดและค่าวิเคราะห์จากแบบจำลอง</small></h2>
+      <h2 id="h-now"><span class="step-no" aria-hidden="true">①</span> <span lang="th">อากาศตอนนี้ <small>ค่าที่วัดได้จากสถานีใกล้ที่สุด และค่าจากโมเดล</small></span><span lang="en">Weather now <small>Measured at the nearest station, plus model values</small></span></h2>
       <div class="cards" id="now"></div>
       <div class="radar-card">
         <div class="radar-head">
-          <h3>🗺️ แผนที่ฝน: ภาพเรดาร์และสถานีตรวจวัด <span id="radar-time" class="muted"></span></h3>
-          <button id="radar-play" class="ghost small" type="button" aria-label="เล่น/หยุดภาพเคลื่อนไหว">▶︎ ย้อนหลัง 2 ชม.</button>
+          <h3>🗺️ <span lang="th">แผนที่ฝน: เรดาร์และสถานีวัดฝน</span><span lang="en">Rain map: radar and rain gauges</span> <span id="radar-time" class="muted"></span></h3>
+          <button id="radar-play" class="ghost small" type="button" aria-label="เล่น/หยุดภาพเคลื่อนไหว" data-en-aria-label="Play/pause animation"></button>
         </div>
-        <div id="map" class="map" role="region" aria-label="แผนที่เรดาร์ฝน สถานีวัด และตำแหน่ง"></div>
+        <div id="map" class="map" role="region" aria-label="แผนที่เรดาร์ฝน สถานีวัด และตำแหน่ง" data-en-aria-label="Map of rain radar, stations and locations"></div>
         <div class="map-tools">
-          <div class="chips map-layers" id="map-layers" role="group" aria-label="เลือกชั้นข้อมูลบนแผนที่"></div>
-          <div class="map-legend" id="map-legend" aria-label="คำอธิบายสี"></div>
+          <div class="chips map-layers" id="map-layers" role="group" aria-label="เลือกชั้นข้อมูลบนแผนที่" data-en-aria-label="Map layers"></div>
+          <div class="map-legend" id="map-legend" aria-label="คำอธิบายสี" data-en-aria-label="Colour legend"></div>
         </div>
-        <p class="note">ภาพเรดาร์: <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a> (ทุก 10 นาที) ·
-          สัญลักษณ์สี = ปริมาณฝนสะสม 24 ชม. ล่าสุดของสถานี (โทรมาตร ThaiWater ทุกหน่วยงาน และสถานีของกรมอุตุนิยมวิทยา) · PM2.5 จาก Air4Thai ·
-          วงแหวน = จุดตรวจสอบที่ใช้ประเมินความถูกต้องของแบบจำลอง · เลือกสัญลักษณ์เพื่อดูค่า · เลือกวงกลมใหญ่เพื่อเปลี่ยนตำแหน่ง</p>
+        <p class="note"><span lang="th">เรดาร์: <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a> (ทุก 10 นาที) ·
+          สีของจุด = ฝนรวม 24 ชม. ล่าสุดของสถานี (เครื่องวัดฝน ThaiWater ทุกหน่วยงาน และสถานีกรมอุตุนิยมวิทยา) · PM2.5 จาก Air4Thai ·
+          วงแหวน = จุดที่ใช้ตรวจว่าโมเดลแม่นไหม · แตะจุดเพื่อดูค่า · แตะวงกลมใหญ่เพื่อเปลี่ยนตำแหน่ง</span><span lang="en">Radar: <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a> (every 10 min) ·
+          Dot colour = rain in the last 24 h at that station (ThaiWater gauges from every agency, and Thai Meteorological Department stations) · PM2.5 from Air4Thai ·
+          Rings = points used to check model accuracy · Tap a dot to see its values · Tap a large circle to change location</span></p>
       </div>
     </section>
 
     <section id="step-2" aria-labelledby="h-next">
-      <h2 id="h-next"><span class="step-no" aria-hidden="true">②</span> พยากรณ์ฝนช่วงถัดไป <small>ฝนสะสมนับจากเวลาที่ได้รับผลพยากรณ์ · ค่ามัธยฐานของทุกแบบจำลอง</small></h2>
+      <h2 id="h-next"><span class="step-no" aria-hidden="true">②</span> <span lang="th">ฝนในช่วงต่อไป <small>ฝนรวมนับจากเวลาที่ได้พยากรณ์ · ค่ากลางของทุกโมเดล</small></span><span lang="en">Rain ahead <small>Total rain from the time of the forecast · median of all models</small></span></h2>
       <div class="tiles" id="next"></div>
     </section>
 
     <section aria-labelledby="h-brief">
-      <h2 id="h-brief">สรุปรายวัน <small>วันอุตุนิยมวิทยา 07:00 → 07:00 น. · ค่ามัธยฐาน (median) ของทุกแบบจำลอง</small></h2>
+      <h2 id="h-brief"><span lang="th">สรุปรายวัน <small>1 วัน = 07:00 ถึง 07:00 น. วันถัดไป · ค่ากลางของทุกโมเดล</small></span><span lang="en">Daily summary <small>1 day = 07:00 to 07:00 next day · median of all models</small></span></h2>
       <div class="cards" id="brief"></div>
     </section>
 
     <details class="fold" id="step-3">
-      <summary><span class="step-no" aria-hidden="true">③</span> <b>ผลพยากรณ์รายแบบจำลอง</b> <small>ฝนรายแบบจำลอง · ความน่าจะเป็นจาก ensemble · HII · ตัวแปรอื่น</small></summary>
+      <summary><span class="step-no" aria-hidden="true">③</span> <span lang="th"><b>ผลพยากรณ์แยกตามโมเดล</b> <small>ฝนของแต่ละโมเดล · โอกาสฝน · HII · ค่าอื่น ๆ</small></span><span lang="en"><b>Forecast by model</b> <small>Rain from each model · rain chance · HII · other values</small></span></summary>
     <section aria-labelledby="h-rain">
-      <h2 id="h-rain">ฝนรายแบบจำลอง (มม.) <small>ช่วงเวลาเดียวกับ ② · เรียงตามความละเอียดเชิงพื้นที่จากสูงไปต่ำ</small></h2>
+      <h2 id="h-rain"><span lang="th">ฝนของแต่ละโมเดล (มม.) <small>ช่วงเวลาเดียวกับ ② · เรียงจากโมเดลที่ละเอียดที่สุด</small></span><span lang="en">Rain from each model (mm) <small>Same periods as ② · finest-resolution models first</small></span></h2>
       <div class="table-wrap" id="rain-table"></div>
       <p class="note" id="rain-note"></p>
     </section>
 
     <section aria-labelledby="h-ens">
-      <h2 id="h-ens">ความน่าจะเป็นของฝนจากระบบ ensemble (%) <small id="ens-sub"></small></h2>
+      <h2 id="h-ens"><span lang="th">โอกาสฝน จากการรันโมเดลซ้ำหลายรอบ (ensemble, %)</span><span lang="en">Rain chance from repeated model runs (ensemble, %)</span> <small id="ens-sub"></small></h2>
       <div class="table-wrap" id="ens-table"></div>
     </section>
 
     <section aria-labelledby="h-hii" id="hii-section" hidden>
-      <h2 id="h-hii">🌊 HII WRF-ROMS (สสน.) <small id="hii-sub">สสน. (สถาบันสารสนเทศทรัพยากรน้ำ)</small></h2>
+      <h2 id="h-hii">🌊 HII WRF-ROMS <span lang="th">(สสน.)</span><span lang="en">(HII)</span> <small id="hii-sub"></small></h2>
       <div class="tiles" id="hii-tiles"></div>
       <p class="note" id="hii-note"></p>
     </section>
 
     <section aria-labelledby="h-params">
-      <h2 id="h-params">ตัวแปรอื่นรายแบบจำลอง <small>ช่วงเวลาเดียวกับตารางฝน</small></h2>
-      <label class="select"><span>ตัวแปร</span><select id="param"></select></label>
+      <h2 id="h-params"><span lang="th">ค่าอื่น ๆ ของแต่ละโมเดล <small>ช่วงเวลาเดียวกับตารางฝน</small></span><span lang="en">Other values by model <small>Same periods as the rain table</small></span></h2>
+      <label class="select"><span><span lang="th">เลือกค่า</span><span lang="en">Show</span></span><select id="param"></select></label>
       <div class="table-wrap" id="param-table"></div>
     </section>
     </details>
 
     <details class="fold" id="step-4">
-      <summary><span class="step-no" aria-hidden="true">④</span> <b>อนุกรมรายชั่วโมง 7 วัน</b> <small>ฝน อุณหภูมิ ความชื้น ลม และ PM2.5</small></summary>
+      <summary><span class="step-no" aria-hidden="true">④</span> <span lang="th"><b>กราฟรายชั่วโมง 7 วัน</b> <small>ฝน อุณหภูมิ ความชื้น ลม และ PM2.5</small></span><span lang="en"><b>Hourly charts, 7 days</b> <small>Rain, temperature, humidity, wind and PM2.5</small></span></summary>
     <section aria-labelledby="h-charts">
       <div class="section-head">
-        <h2 id="h-charts">อนุกรมรายชั่วโมง 7 วัน</h2>
+        <h2 id="h-charts"><span lang="th">กราฟรายชั่วโมง 7 วัน</span><span lang="en">Hourly charts, 7 days</span></h2>
         <label class="select">
-          <span>เส้นสีส้ม = แบบจำลอง</span>
+          <span><span lang="th">เส้นสีส้ม = โมเดล</span><span lang="en">Orange line = model</span></span>
           <select id="highlight"></select>
         </label>
       </div>
@@ -128,26 +134,28 @@
     </details>
 
     <details class="fold" id="step-5">
-      <summary><span class="step-no" aria-hidden="true">⑤</span> <b>แหล่งที่มาและการตรวจสอบความถูกต้อง</b> <small>รอบการประมวลผลของแต่ละแบบจำลอง · 🏆 ผลการตรวจสอบ</small></summary>
+      <summary><span class="step-no" aria-hidden="true">⑤</span> <span lang="th"><b>โมเดลไหนแม่น</b> <small>แต่ละโมเดลรันเมื่อไร · 🏆 ผลการตรวจย้อนหลัง</small></span><span lang="en"><b>Which model is right?</b> <small>When each model ran · 🏆 track record</small></span></summary>
     <section aria-labelledby="h-runs">
-      <h2 id="h-runs">รอบการประมวลผล (initialisation) ของแต่ละแบบจำลอง <small id="runs-sub">ผลพยากรณ์ในหน้านี้มาจากรอบใด</small></h2>
+      <h2 id="h-runs"><span lang="th">แต่ละโมเดลรันเมื่อไร</span><span lang="en">When each model ran</span> <small id="runs-sub"></small></h2>
       <div class="table-wrap" id="runs-table"></div>
-      <p class="note">รอบการประมวลผล (init) = เวลาเริ่มต้นการคำนวณของแบบจำลอง · <b>ยืนยันแล้ว</b> = อ้างอิงจาก metadata ของ Open-Meteo · <b>ประมาณ</b> = คำนวณจากตารางรอบการประมวลผลและเวลาเผยแพร่โดยทั่วไป ·
-        Google ปรับปรุงต่อเนื่องโดยไม่มีรอบการประมวลผลที่ระบุได้</p>
+      <p class="note"><span lang="th">รอบรัน = เวลาที่โมเดลเริ่มคำนวณ · <b>ยืนยันแล้ว</b> = ตามข้อมูลของ Open-Meteo · <b>ประมาณ</b> = คำนวณจากตารางรอบรันและเวลาที่ผลออกตามปกติ ·
+        Google อัปเดตต่อเนื่อง จึงไม่มีรอบรัน</span><span lang="en">Run = the time the model started calculating · <b>Confirmed</b> = from Open-Meteo metadata · <b>Estimated</b> = from the usual run schedule and release delay ·
+        Google updates continuously, so it has no run time</span></p>
     </section>
 
     <section aria-labelledby="h-verify" class="verify">
-      <h2 id="h-verify">🏆 การตรวจสอบความถูกต้องของแบบจำลอง <small id="v-sub">เทียบกับค่าตรวจวัด</small></h2>
+      <h2 id="h-verify">🏆 <span lang="th">โมเดลไหนแม่น</span><span lang="en">Which model is right?</span> <small id="v-sub"></small></h2>
       <div id="near-skill"></div>
-      <div class="chips v-mode" role="tablist" aria-label="มุมมอง">
-        <button class="chip" id="vm-user" role="tab" type="button">👤 มุมมองผู้ใช้งาน</button>
-        <button class="chip" id="vm-wmo" role="tab" type="button">🔬 มาตรฐาน WMO (สำหรับงานวิจัย)</button>
+      <div class="chips v-mode" role="tablist" aria-label="มุมมอง" data-en-aria-label="View">
+        <button class="chip" id="vm-user" role="tab" type="button">👤 <span lang="th">สำหรับผู้ใช้ทั่วไป</span><span lang="en">For everyone</span></button>
+        <button class="chip" id="vm-wmo" role="tab" type="button">🔬 <span lang="th">มาตรฐาน WMO (สำหรับงานวิจัย)</span><span lang="en">WMO standard (for research)</span></button>
       </div>
 
       <div id="v-user">
-        <p class="note">คำถามการประเมิน: <b>ผลพยากรณ์ที่ผู้ใช้เห็นบนหน้าเว็บมีความน่าเชื่อถือเพียงใด</b> — ใช้ช่วงเวลาเดียวกับตารางข้างต้น (+3 ชม. … วันถัดไป … D+7) นับจากเวลาที่ได้รับผลพยากรณ์
-          และใช้เฉพาะผลพยากรณ์ที่เผยแพร่แล้ว ณ เวลานั้น (แบบจำลองที่เผยแพร่ช้าจึงใช้ผลรอบก่อนหน้า) · “มีฝน” = ≥ 1 มม. ในช่วงนั้น</p>
-        <div class="chips" id="u-wins" role="tablist" aria-label="ช่วงเวลา"></div>
+        <p class="note"><span lang="th">คำถาม: <b>พยากรณ์ที่เห็นบนหน้านี้ เชื่อได้แค่ไหน</b> — ใช้ช่วงเวลาเดียวกับตารางข้างบน (+3 ชม. … วันถัดไป … D+7) นับจากเวลาที่ได้พยากรณ์
+          และใช้เฉพาะพยากรณ์ที่ออกมาแล้ว ณ เวลานั้น · “ฝนตก” = ฝน 1 มม. ขึ้นไปในช่วงนั้น</span><span lang="en">Question: <b>how far can you trust the forecasts on this page?</b> — same periods as the tables above (+3 h … tomorrow … D+7), counted from the time of the forecast,
+          using only forecasts that were already published at that time · “Rain” = 1 mm or more in the period</span></p>
+        <div class="chips" id="u-wins" role="tablist" aria-label="ช่วงเวลา" data-en-aria-label="Period"></div>
         <div class="v-summary" id="u-summary" role="status"></div>
         <div class="table-wrap" id="u-table"></div>
         <div class="u-extra">
@@ -160,48 +168,55 @@
       <div id="v-wmo">
 
       <!-- แผนภาพ: เปรียบเทียบอย่างไร -->
-      <div class="v-how" aria-label="วิธีเปรียบเทียบ">
+      <div class="v-how" aria-label="วิธีเปรียบเทียบ" data-en-aria-label="How the comparison works">
         <ol class="v-steps">
-          <li><span class="v-ico">🖥️</span><b>1. จัดเก็บผลพยากรณ์</b><span>บันทึกผลพยากรณ์ของทุกแบบจำลองทุกชั่วโมง</span></li>
-          <li><span class="v-ico">⏳</span><b>2. กำหนดระยะล่วงหน้า</b><span>นับเป็น T+ ชม. จากรอบการประมวลผลของแบบจำลอง (ตามแนวทาง WMO)</span></li>
-          <li><span class="v-ico">🌧️</span><b>3. ค่าตรวจวัดอ้างอิง</b><span>สถานีอุตุนิยมวิทยา เครื่องวัดฝนโทรมาตร และรายงานจากผู้ใช้</span></li>
-          <li><span class="v-ico">✅</span><b>4. คำนวณดัชนีความถูกต้อง</b><span>ตาราง contingency และค่าความคลาดเคลื่อน</span></li>
+          <li><span class="v-ico">🖥️</span><b><span lang="th">1. เก็บพยากรณ์</span><span lang="en">1. Store forecasts</span></b><span><span lang="th">บันทึกพยากรณ์ของทุกโมเดลทุกชั่วโมง</span><span lang="en">Every model's forecast is saved every hour</span></span></li>
+          <li><span class="v-ico">⏳</span><b><span lang="th">2. นับเวลาล่วงหน้า</span><span lang="en">2. Count lead time</span></b><span><span lang="th">นับเป็น T+ ชม. จากเวลาที่โมเดลเริ่มรัน (ตามแนวทาง WMO)</span><span lang="en">Hours (T+) from when the model run started (WMO practice)</span></span></li>
+          <li><span class="v-ico">🌧️</span><b><span lang="th">3. ค่าที่วัดได้จริง</span><span lang="en">3. Real measurements</span></b><span><span lang="th">สถานีอุตุนิยมวิทยา เครื่องวัดฝน และรายงานจากผู้ใช้</span><span lang="en">Weather stations, rain gauges and user reports</span></span></li>
+          <li><span class="v-ico">✅</span><b><span lang="th">4. ให้คะแนน</span><span lang="en">4. Score</span></b><span><span lang="th">นับครั้งที่ทายถูก/ผิด และวัดว่าคลาดไปเท่าไร</span><span lang="en">Count right and wrong calls, and measure the error</span></span></li>
         </ol>
-        <div class="v-tl" role="img" aria-label="ตัวอย่าง: รอบรัน 00 UTC (07:00 น.) ทายฝนวันพรุ่งนี้ 07:00 ถึง 07:00 = Day 1">
-          <div class="tl-node"><span class="tl-dot"></span><b>รอบรัน (init)</b><small>00 UTC = 07:00 น.</small></div>
-          <div class="tl-gap"><small>นับ T+ ชม. จากเวลาเริ่มรัน</small><span class="tl-line"></span></div>
-          <div class="tl-box"><b>Day 1 = T+0 ถึง T+24</b><small>ฝนที่วัดได้ 07:00 → 07:00 น. (00–00 UTC)</small></div>
+        <div class="v-tl" role="img" aria-label="ตัวอย่าง: รอบรัน 00 UTC (07:00 น.) ทายฝนวันพรุ่งนี้ 07:00 ถึง 07:00 = Day 1" data-en-aria-label="Example: a 00 UTC run (07:00 Thai time) forecasting rain from 07:00 to 07:00 = Day 1">
+          <div class="tl-node"><span class="tl-dot"></span><b><span lang="th">รอบรัน (init)</span><span lang="en">Model run (init)</span></b><small><span lang="th">00 UTC = 07:00 น.</span><span lang="en">00 UTC = 07:00 Thai time</span></small></div>
+          <div class="tl-gap"><small><span lang="th">นับ T+ ชม. จากเวลาเริ่มรัน</span><span lang="en">T+ hours from the start of the run</span></small><span class="tl-line"></span></div>
+          <div class="tl-box"><b><span lang="th">Day 1 = T+0 ถึง T+24</span><span lang="en">Day 1 = T+0 to T+24</span></b><small><span lang="th">ฝนที่วัดได้ 07:00 → 07:00 น. (00–00 UTC)</span><span lang="en">Rain measured 07:00 → 07:00 (00–00 UTC)</span></small></div>
         </div>
       </div>
 
-      <h3 class="v-h3">เลือกแหล่งค่าตรวจวัดอ้างอิง</h3>
-      <div class="v-sources" id="v-sources" role="tablist" aria-label="แหล่งค่าวัดจริง"></div>
+      <h3 class="v-h3"><span lang="th">เลือกค่าที่วัดได้ที่ใช้เทียบ</span><span lang="en">Choose the measurements to compare with</span></h3>
+      <div class="v-sources" id="v-sources" role="tablist" aria-label="แหล่งค่าวัดจริง" data-en-aria-label="Measurement source"></div>
       <div class="v-controls">
-        <div class="chips" id="v-vars" role="tablist" aria-label="ตัวแปร"></div>
-        <div class="chips" id="v-leads" role="tablist" aria-label="ช่วงเวลาล่วงหน้า"></div>
+        <div class="chips" id="v-vars" role="tablist" aria-label="ตัวแปร" data-en-aria-label="Variable"></div>
+        <div class="chips" id="v-leads" role="tablist" aria-label="ช่วงเวลาล่วงหน้า" data-en-aria-label="Lead time"></div>
       </div>
 
       <div class="v-summary" id="v-summary" role="status"></div>
       <div class="table-wrap" id="v-table"></div>
-      <details class="v-more"><summary>ดัชนีเชิงเทคนิคทั้งหมดและผลของระบบ ensemble</summary>
+      <details class="v-more"><summary><span lang="th">คะแนนเชิงเทคนิคทั้งหมด และผลของ ensemble</span><span lang="en">All technical scores, and ensemble results</span></summary>
         <div class="table-wrap" id="v-table-full"></div>
         <div class="table-wrap v-ens" id="v-ens"></div>
       </details>
       <p class="note" id="v-note"></p>
 
       <details class="v-help" open>
-        <summary>วิธีคำนวณดัชนีความถูกต้อง</summary>
-        <div class="v-matrix" aria-label="ตารางการให้คะแนนฝน">
-          <div></div><div class="vm-h">เกิดฝนจริง 🌧️</div><div class="vm-h">ไม่เกิดฝน ☀️</div>
-          <div class="vm-h">พยากรณ์ว่ามีฝน</div><div class="vm good">✅ Hit<small>(พยากรณ์ถูก)</small></div><div class="vm bad">⚠️ False alarm<small>(เตือนแต่ไม่เกิด)</small></div>
-          <div class="vm-h">พยากรณ์ว่าไม่มีฝน</div><div class="vm bad">❌ Miss<small>(เกิดแต่ไม่ได้เตือน)</small></div><div class="vm good">✅ Correct negative<small>(ไม่เกิดตามพยากรณ์)</small></div>
+        <summary><span lang="th">คิดคะแนนอย่างไร</span><span lang="en">How the scores work</span></summary>
+        <div class="v-matrix" aria-label="ตารางการให้คะแนนฝน" data-en-aria-label="Rain scoring table">
+          <div></div><div class="vm-h"><span lang="th">ฝนตกจริง 🌧️</span><span lang="en">It rained 🌧️</span></div><div class="vm-h"><span lang="th">ฝนไม่ตก ☀️</span><span lang="en">No rain ☀️</span></div>
+          <div class="vm-h"><span lang="th">ทายว่าตก</span><span lang="en">Forecast rain</span></div><div class="vm good">✅ Hit<small><span lang="th">(ทายถูก)</span><span lang="en">(right)</span></small></div><div class="vm bad">⚠️ False alarm<small><span lang="th">(เตือนแต่ไม่ตก)</span><span lang="en">(warned, no rain)</span></small></div>
+          <div class="vm-h"><span lang="th">ทายว่าไม่ตก</span><span lang="en">Forecast dry</span></div><div class="vm bad">❌ Miss<small><span lang="th">(ตกแต่ไม่ได้เตือน)</span><span lang="en">(rained, no warning)</span></small></div><div class="vm good">✅ Correct negative<small><span lang="th">(ไม่ตกตามที่ทาย)</span><span lang="en">(dry, as forecast)</span></small></div>
         </div>
-        <ul>
-          <li><b>Critical Success Index (CSI)</b> = Hit ÷ (Hit + Miss + False alarm) — ไม่รวมกรณี Correct negative จึงสะท้อนทักษะการพยากรณ์เหตุการณ์ฝนโดยตรง (0–100 ค่าสูงดีกว่า)</li>
-          <li><b>ความถูกต้องรวม (accuracy)</b> = (Hit + Correct negative) ÷ ทั้งหมด — ในฤดูแล้งค่านี้อาจสูงเกินจริง เนื่องจากการพยากรณ์ว่าไม่มีฝนถูกต้องเกือบทุกวัน</li>
-          <li><b>Frequency bias</b> — มากกว่า 1 = พยากรณ์เหตุการณ์ฝนบ่อยเกิน · น้อยกว่า 1 = พยากรณ์น้อยเกิน</li>
-          <li>อุณหภูมิ: <b>MAE</b> (ค่าคลาดเคลื่อนสัมบูรณ์เฉลี่ย, °C) ค่าน้อยดีกว่า · <b>bias</b> แสดงแนวโน้มพยากรณ์สูงหรือต่ำกว่าค่าจริง · <b>RMSE</b> ให้น้ำหนักกับความคลาดเคลื่อนขนาดใหญ่</li>
-          <li>จัดอันดับแยกตามระยะล่วงหน้า เนื่องจากแบบจำลองมีระยะพยากรณ์ไม่เท่ากัน · หากขนาดตัวอย่างน้อยกว่า 30 ผลยังไม่มีเสถียรภาพทางสถิติ</li>
+        <ul lang="th">
+          <li><b>CSI</b> = Hit ÷ (Hit + Miss + False alarm) — ไม่นับวันที่ทายว่าไม่ตกแล้วไม่ตก จึงวัดได้ตรง ๆ ว่าจับฝนได้ดีแค่ไหน (0–100 ยิ่งสูงยิ่งดี)</li>
+          <li><b>ทายถูกรวม (accuracy)</b> = (Hit + Correct negative) ÷ ทั้งหมด — หน้าแล้งค่านี้สูงเกินจริงได้ เพราะทายว่า “ไม่ตก” ก็ถูกเกือบทุกวัน</li>
+          <li><b>Frequency bias</b> — มากกว่า 1 = ทายว่าฝนตกบ่อยเกินไป · น้อยกว่า 1 = ทายน้อยเกินไป</li>
+          <li>อุณหภูมิ: <b>MAE</b> = คลาดเฉลี่ยกี่ °C (ยิ่งน้อยยิ่งดี) · <b>bias</b> = ทายสูงหรือต่ำกว่าจริงโดยเฉลี่ย · <b>RMSE</b> = ให้น้ำหนักกับครั้งที่คลาดมาก</li>
+          <li>จัดอันดับแยกตามเวลาล่วงหน้า เพราะแต่ละโมเดลพยากรณ์ได้ไกลไม่เท่ากัน · ถ้ามีข้อมูลไม่ถึง 30 ครั้ง ผลยังเปลี่ยนได้มาก</li>
+        </ul>
+        <ul lang="en">
+          <li><b>CSI</b> = Hit ÷ (Hit + Miss + False alarm) — ignores correct “dry” calls, so it shows directly how well rain is caught (0–100, higher is better)</li>
+          <li><b>Accuracy</b> = (Hit + Correct negative) ÷ all — can look too good in the dry season, when “no rain” is right almost every day</li>
+          <li><b>Frequency bias</b> — above 1 = rain forecast too often · below 1 = too rarely</li>
+          <li>Temperature: <b>MAE</b> = average error in °C (lower is better) · <b>bias</b> = forecast too warm or too cold on average · <b>RMSE</b> = gives more weight to large errors</li>
+          <li>Ranked separately for each lead time, because models forecast different distances ahead · with fewer than 30 cases, results can still change a lot</li>
         </ul>
         <div id="v-points"></div>
       </details>
@@ -209,190 +224,262 @@
       </div>
 
       <details class="v-help">
-        <summary>⏱️ กรอบเวลามาตรฐาน: การนับระยะล่วงหน้า</summary>
-        <ul>
-          <li>โมเดลไม่ได้คำนวณใหม่ทุกชั่วโมง แต่รันเป็น <b>รอบ (init / cycle)</b> ที่ 00, 06, 12, 18 UTC (= 07:00, 13:00, 19:00, 01:00 น.) บางโมเดลวันละ 2 รอบ
-            และผลออกมาหลังเริ่มรัน 3–10 ชม. ดังนั้นพยากรณ์ที่ “ดึงมาตอนนี้” อาจเป็นของรอบเมื่อหลายชั่วโมงก่อน (ดูตาราง “⑤ รอบรันของแต่ละโมเดล” ด้านบน)</li>
-          <li><b>ช่วงล่วงหน้า = T+ ชม.</b> นับจากเวลาเริ่มรันถึงปลายช่วงที่วัด ตามแนวทาง WMO (เดิมนับจากเวลาที่ดึง ซึ่งทำให้โมเดลที่ออกช้าเสียเปรียบ)
-            · ฝนราย 3 ชม./อุณหภูมิ จัดกลุ่มเป็น T+0–12, 12–24, 24–48, 48–72, 72–120, 120–168, 168–240 ชม. (ไม่มี T+0–6 เพราะโมเดลส่งผลช้ากว่ารอบรัน 4–16 ชม. มีแต่ Google ที่อัปเดตต่อเนื่องซึ่งนับรอบ = เวลาที่ดึง) · แสดงเฉพาะช่วงที่มีอย่างน้อย 2 โมเดล</li>
-          <li><b>วันพยากรณ์ Day N</b> = ฝน 24 ชม. 07:00–07:00 น. (= 00–00 UTC วันอุตุนิยมวิทยาของไทยและ WMO) ที่ปลายช่วงห่างจากเวลาเริ่มรัน 24N ± 12 ชม.
-            เช่น รอบ 00 UTC → Day 1 คือ T+0–24, รอบ 12 UTC ของเมื่อวาน → Day 1 คือ T+12–36</li>
-          <li>ใช้เฉพาะรอบรันที่เริ่ม <b>ก่อนต้นช่วงที่วัด</b> และระบบได้รับไว้แล้ว — ไม่มีการใช้ข้อมูลที่รู้ผลแล้ว</li>
-          <li><b>HII WRF-ROMS</b> ออกผลเป็นฝน 19:00–19:00 น. (12–12 UTC) จึงเทียบในช่วงนั้นแยกไว้ในแหล่ง “🌊 HII” โดยทุกโมเดลใช้ช่วงและเกณฑ์ Day N เดียวกัน</li>
-          <li><b>ทั่วประเทศ</b> ใช้ Previous Runs ของ Open-Meteo: ทุกชั่วโมงใช้ค่าที่ทายไว้ล่วงหน้า ≥ 24 / 72 / 168 ชม. (อาจมาจากหลายรอบรัน) จึงเรียกว่า “ล่วงหน้า ≥ 24 ชม.” ไม่ใช่ Day N จากรอบเดียว</li>
-          <li><b>ปุ่มแจ้งฝน</b> ยังนับช่วงล่วงหน้าจากเวลาที่ดึงพยากรณ์ (จำนวนครั้งน้อย ใช้ดูแนวโน้ม)</li>
+        <summary>⏱️ <span lang="th">นับเวลาล่วงหน้าอย่างไร</span><span lang="en">How lead time is counted</span></summary>
+        <ul lang="th">
+          <li>โมเดลไม่ได้คำนวณใหม่ทุกชั่วโมง แต่รันเป็น <b>รอบ</b> ที่ 00, 06, 12, 18 UTC (= 07:00, 13:00, 19:00, 01:00 น.) บางโมเดลวันละ 2 รอบ
+            และผลออกหลังเริ่มรัน 3–10 ชม. พยากรณ์ที่ได้ “ตอนนี้” จึงอาจมาจากรอบเมื่อหลายชั่วโมงก่อน (ดูตาราง “แต่ละโมเดลรันเมื่อไร” ด้านบน)</li>
+          <li><b>เวลาล่วงหน้า = T+ ชม.</b> นับจากเวลาเริ่มรันถึงปลายช่วงที่วัด ตามแนวทาง WMO
+            · ฝนราย 3 ชม. และอุณหภูมิ แบ่งเป็น T+0–12, 12–24, 24–48, 48–72, 72–120, 120–168, 168–240 ชม. (ไม่มี T+0–6 เพราะผลออกช้ากว่ารอบรัน 4–16 ชม. ยกเว้น Google ที่อัปเดตต่อเนื่อง) · แสดงเฉพาะช่วงที่มีอย่างน้อย 2 โมเดล</li>
+          <li><b>Day N</b> = ฝน 24 ชม. 07:00–07:00 น. (= 00–00 UTC ตามวันอุตุนิยมวิทยาของไทยและ WMO) ที่ปลายช่วงห่างจากเวลาเริ่มรัน 24N ± 12 ชม.
+            เช่น รอบ 00 UTC → Day 1 คือ T+0–24 · รอบ 12 UTC ของเมื่อวาน → Day 1 คือ T+12–36</li>
+          <li>ใช้เฉพาะรอบที่เริ่มรัน <b>ก่อน</b> ช่วงที่วัด และระบบได้รับไว้แล้ว — ไม่ใช้ข้อมูลที่รู้ผลแล้ว</li>
+          <li><b>HII WRF-ROMS</b> ให้ฝนเป็นช่วง 19:00–19:00 น. (12–12 UTC) จึงเทียบแยกไว้ในหัวข้อ “🌊 HII” โดยทุกโมเดลใช้ช่วงและเกณฑ์เดียวกัน</li>
+          <li><b>ทั่วประเทศ</b> ใช้ Previous Runs ของ Open-Meteo: ทุกชั่วโมงใช้ค่าที่ทายไว้ล่วงหน้าอย่างน้อย 24 / 72 / 168 ชม. (อาจมาจากหลายรอบ)</li>
+          <li><b>ปุ่มรายงานฝน</b> ยังนับเวลาล่วงหน้าจากเวลาที่ได้พยากรณ์ (มีรายงานไม่มาก ใช้ดูแนวโน้ม)</li>
+        </ul>
+        <ul lang="en">
+          <li>Models do not recalculate every hour. They run in <b>cycles</b> at 00, 06, 12 and 18 UTC (= 07:00, 13:00, 19:00, 01:00 Thai time), some only twice a day,
+            and results arrive 3–10 h after the run starts. A forecast fetched “now” may come from a run several hours old (see “When each model ran” above)</li>
+          <li><b>Lead time = T+ hours</b> from the start of the run to the end of the measured period, following WMO practice
+            · 3-hour rain and temperature are grouped as T+0–12, 12–24, 24–48, 48–72, 72–120, 120–168, 168–240 h (no T+0–6, because results arrive 4–16 h after the run, except Google, which updates continuously) · only periods with at least 2 models are shown</li>
+          <li><b>Day N</b> = 24-hour rain 07:00–07:00 Thai time (= 00–00 UTC, the Thai and WMO climate day) whose end is 24N ± 12 h after the run started.
+            For example, a 00 UTC run → Day 1 is T+0–24 · yesterday's 12 UTC run → Day 1 is T+12–36</li>
+          <li>Only runs that started <b>before</b> the measured period and were already received are used — no hindsight</li>
+          <li><b>HII WRF-ROMS</b> gives rain for 19:00–19:00 (12–12 UTC), so it is compared separately under “🌊 HII”, with every model using the same period and threshold</li>
+          <li><b>Nationwide</b> uses Open-Meteo Previous Runs: each hour uses the value forecast at least 24 / 72 / 168 h ahead (possibly from several runs)</li>
+          <li><b>The rain report buttons</b> still count lead time from when the forecast was fetched (few reports so far; use as a trend)</li>
         </ul>
       </details>
 
-      <p class="note">🗂️ แหล่งข้อมูล ช่วงเวลา และวิธีการจัดเก็บของทุกชุดข้อมูล ดูที่หน้า <a href="data.html">📚 ข้อมูลและแหล่งที่มา</a></p>
+      <p class="note">🗂️ <span lang="th">ที่มา ช่วงเวลา และวิธีเก็บของข้อมูลทุกชุด ดูได้ที่หน้า</span><span lang="en">Sources, time coverage and collection method of every dataset are on the</span> <a href="data.html">📚 <span lang="th">ข้อมูลและแหล่งที่มา</span><span lang="en">Data &amp; sources page</span></a></p>
     </section>
     </details>
 
     <section id="national" aria-labelledby="h-nat">
-      <h2 id="h-nat">🇹🇭 ทั่วประเทศ <small>พยากรณ์ 77 จังหวัด และความถูกต้องของแบบจำลอง ณ สถานีอุตุนิยมวิทยาทุกแห่ง</small></h2>
-      <p class="note" id="nt-updated">กำลังโหลด…</p>
-      <div class="chips" id="nt-mode" role="tablist" aria-label="มุมมอง"></div>
+      <h2 id="h-nat">🇹🇭 <span lang="th">ทั่วประเทศ <small>พยากรณ์ 77 จังหวัด และความแม่นของโมเดลที่สถานีอุตุนิยมวิทยาทุกแห่ง</small></span><span lang="en">Nationwide <small>Forecasts for 77 provinces, and model accuracy at every weather station</small></span></h2>
+      <p class="note" id="nt-updated"><span lang="th">กำลังโหลด…</span><span lang="en">Loading…</span></p>
+      <div class="chips" id="nt-mode" role="tablist" aria-label="มุมมอง" data-en-aria-label="View"></div>
       <div id="nt-fc-ctl">
-        <div class="chips" id="nt-days" role="tablist" aria-label="วันพยากรณ์"></div>
-        <div class="chips" id="nt-metric" role="tablist" aria-label="ค่าที่แสดงบนแผนที่"></div>
+        <div class="chips" id="nt-days" role="tablist" aria-label="วันพยากรณ์" data-en-aria-label="Forecast day"></div>
+        <div class="chips" id="nt-metric" role="tablist" aria-label="ค่าที่แสดงบนแผนที่" data-en-aria-label="Map value"></div>
       </div>
       <div id="nt-vf-ctl" hidden>
-        <div class="chips" id="nt-var" role="tablist" aria-label="ตัวแปร"></div>
-        <div class="chips" id="nt-lead" role="tablist" aria-label="ระยะล่วงหน้า"></div>
-        <label class="nt-model">แบบจำลอง <select id="nt-model"></select></label>
+        <div class="chips" id="nt-var" role="tablist" aria-label="ตัวแปร" data-en-aria-label="Variable"></div>
+        <div class="chips" id="nt-lead" role="tablist" aria-label="ระยะล่วงหน้า" data-en-aria-label="Lead time"></div>
+        <label class="nt-model"><span lang="th">โมเดล</span><span lang="en">Model</span> <select id="nt-model"></select></label>
       </div>
       <div class="hs-grid">
-        <div id="nt-map" class="map" role="region" aria-label="แผนที่ประเทศไทย"></div>
+        <div id="nt-map" class="map" role="region" aria-label="แผนที่ประเทศไทย" data-en-aria-label="Map of Thailand"></div>
         <div id="nt-detail" class="hs-detail"></div>
       </div>
       <div class="map-legend" id="nt-legend"></div>
-      <h3>ตารางสรุป <small>คลิกชื่อจังหวัดหรือสถานีบนแผนที่เพื่อดูรายละเอียด · กรอบหนา = ค่าที่ดีที่สุดของแต่ละภาค</small></h3>
+      <h3><span lang="th">ตารางสรุป <small>แตะชื่อจังหวัดหรือสถานีบนแผนที่เพื่อดูรายละเอียด · กรอบหนา = ดีที่สุดของแต่ละภาค</small></span><span lang="en">Summary table <small>Tap a province or station on the map for details · bold outline = best in each region</small></span></h3>
       <div class="table-wrap" id="nt-table"></div>
       <details class="hs-method">
-        <summary>วิธีการและข้อจำกัด</summary>
+        <summary><span lang="th">วิธีการและข้อจำกัด</span><span lang="en">Method and limitations</span></summary>
         <div id="nt-method"></div>
       </details>
     </section>
 
     <section id="heatsafe" aria-labelledby="h-heat">
-      <h2 id="h-heat">🌡️ พยากรณ์ภัยความร้อนรายเขต กรุงเทพมหานคร <small>สนับสนุนโครงการวิจัย HEAT-SAFE Bangkok (วช. 2570)</small></h2>
-      <p class="note" id="hs-updated">กำลังโหลด…</p>
+      <h2 id="h-heat">🌡️ <span lang="th">พยากรณ์ความร้อนรายเขต กรุงเทพมหานคร <small>สนับสนุนโครงการวิจัย HEAT-SAFE Bangkok (วช. 2570)</small></span><span lang="en">Heat forecast by district, Bangkok <small>Supports the HEAT-SAFE Bangkok research project (NRCT 2027)</small></span></h2>
+      <p class="note" id="hs-updated"><span lang="th">กำลังโหลด…</span><span lang="en">Loading…</span></p>
       <div class="hs-guide">
-        <div><b>ล่วงหน้า 4–7 วัน</b> ใช้พิจารณาแนวโน้มและความน่าจะเป็น เพื่อเตรียมบุคลากรและทรัพยากร</div>
-        <div><b>ล่วงหน้า 1–3 วัน</b> ใช้ประกอบการตัดสินใจแจ้งเตือน ร่วมกับพยากรณ์รอบล่าสุดและค่าตรวจวัดในพื้นที่</div>
+        <div><span lang="th"><b>ล่วงหน้า 4–7 วัน</b> ใช้ดูแนวโน้มและโอกาส เพื่อเตรียมคนและอุปกรณ์</span><span lang="en"><b>4–7 days ahead</b> — use for trends and chances, to prepare staff and resources</span></div>
+        <div><span lang="th"><b>ล่วงหน้า 1–3 วัน</b> ใช้ประกอบการตัดสินใจแจ้งเตือน ร่วมกับพยากรณ์รอบล่าสุดและค่าที่วัดได้ในพื้นที่</span><span lang="en"><b>1–3 days ahead</b> — use to help decide on warnings, together with the latest forecast and local measurements</span></div>
       </div>
-      <div class="chips" id="hs-days" role="tablist" aria-label="วันพยากรณ์"></div>
-      <div class="chips" id="hs-metric" role="tablist" aria-label="ค่าที่แสดงบนแผนที่"></div>
+      <div class="chips" id="hs-days" role="tablist" aria-label="วันพยากรณ์" data-en-aria-label="Forecast day"></div>
+      <div class="chips" id="hs-metric" role="tablist" aria-label="ค่าที่แสดงบนแผนที่" data-en-aria-label="Map value"></div>
       <div class="hs-grid">
-        <div id="hs-map" class="map" role="region" aria-label="แผนที่ระดับเตือนภัยความร้อนรายเขต"></div>
+        <div id="hs-map" class="map" role="region" aria-label="แผนที่ระดับเตือนความร้อนรายเขต" data-en-aria-label="Map of heat warning level by district"></div>
         <div id="hs-detail" class="hs-detail"></div>
       </div>
       <div class="map-legend" id="hs-legend"></div>
-      <h3>ตารางรายเขต <small>เรียงตามดัชนีความร้อนสูงสุดของวันที่เลือก · คลิกชื่อเขตเพื่อดูรายละเอียด</small></h3>
+      <h3><span lang="th">ตารางรายเขต <small>เรียงจากเขตที่ร้อนที่สุดของวันที่เลือก · แตะชื่อเขตเพื่อดูรายละเอียด</small></span><span lang="en">District table <small>Hottest district first for the selected day · tap a district for details</small></span></h3>
       <div class="table-wrap" id="hs-table"></div>
       <details class="hs-method">
-        <summary>วิธีการ ความไม่แน่นอน และข้อจำกัด</summary>
+        <summary><span lang="th">วิธีการ ความไม่แน่นอน และข้อจำกัด</span><span lang="en">Method, uncertainty and limitations</span></summary>
         <div id="hs-method"></div>
       </details>
     </section>
 
     <section id="about" aria-labelledby="h-about">
-      <h2 id="h-about">ℹ️ เกี่ยวกับระบบ</h2>
+      <h2 id="h-about">ℹ️ <span lang="th">เกี่ยวกับระบบ</span><span lang="en">About</span></h2>
 
       <div class="about-hero">
-        <p>ระบบนี้<b>รวบรวมผลพยากรณ์จากแบบจำลองเชิงตัวเลขของหน่วยงานระดับโลกและของประเทศไทยไว้ในกรอบเดียวกัน</b> และ<b>ตรวจสอบความถูกต้องย้อนหลังกับค่าตรวจวัดในประเทศไทยอย่างต่อเนื่อง</b>
-          เพื่อตอบคำถามวิจัยว่า <i>“แบบจำลองใดให้ผลพยากรณ์ฝน อุณหภูมิ และภัยความร้อนที่ถูกต้องที่สุดสำหรับพื้นที่ศึกษา และมีความไม่แน่นอนเพียงใด”</i>
-          ระบบนี้เป็นขั้นตอนหนึ่งของโครงการวิจัย HEAT-SAFE Bangkok (วช. 2570) ในส่วนการพยากรณ์และการตรวจสอบข้อมูลอุตุนิยมวิทยา</p>
+        <p lang="th">ระบบนี้<b>รวมพยากรณ์จากโมเดลอากาศของหน่วยงานทั่วโลกและของไทยไว้ในที่เดียว</b> แล้ว<b>คอยเทียบกับค่าที่วัดได้จริงในประเทศไทยอยู่ตลอด</b>
+          เพื่อตอบว่า <i>“โมเดลไหนพยากรณ์ฝน อุณหภูมิ และความร้อนในพื้นที่ของเราได้แม่นที่สุด และไม่แน่นอนแค่ไหน”</i>
+          ส่วนการพยากรณ์และตรวจสอบข้อมูลนี้ยังใช้ในโครงการวิจัย HEAT-SAFE Bangkok (วช. 2570)</p>
+        <p lang="en">This system <b>brings forecasts from weather models of agencies around the world and in Thailand together in one place</b>, and <b>keeps checking them against real measurements in Thailand</b>,
+          to answer <i>“which model forecasts rain, temperature and heat best for our area, and how uncertain is it?”</i>
+          The forecasting and checking part is also used by the HEAT-SAFE Bangkok research project (NRCT 2027).</p>
         <p class="muted" id="about-stats"></p>
       </div>
 
-      <h3>🎯 วัตถุประสงค์</h3>
+      <h3>🎯 <span lang="th">ทำไปเพื่ออะไร</span><span lang="en">What it is for</span></h3>
       <div class="cards">
-        <article class="card"><h4>1. การพยากรณ์แบบหลายแบบจำลอง</h4>
-          <p>แบบจำลอง 12 ระบบใช้วิธีเชิงฟิสิกส์และปัญญาประดิษฐ์ที่แตกต่างกัน ความสอดคล้องระหว่างแบบจำลองบ่งชี้ความเชื่อมั่น ส่วนการกระจายของผลบ่งชี้ความไม่แน่นอน ซึ่งพิจารณาร่วมกับความน่าจะเป็นจากระบบ ensemble 6 ระบบ</p></article>
-        <article class="card"><h4>2. การประเมินความน่าเชื่อถือ</h4>
-          <p>ผลพยากรณ์แต่ละรายการแสดงสถิติความน่าเชื่อถือย้อนหลัง ซึ่งคำนวณจากการเทียบผลพยากรณ์ที่เผยแพร่ <b>ก่อน</b> เหตุการณ์กับค่าตรวจวัด ในช่วงเวลาเดียวกับที่แสดงบนหน้าเว็บ</p></article>
-        <article class="card"><h4>3. ฝนและความร้อนในเขตเมือง</h4>
-          <p>ฝนฟ้าคะนองและความร้อนในเขตเมืองมีความแปรปรวนเชิงพื้นที่สูง ระบบจึงรวมแบบจำลองความละเอียดสูง (TMD WRF 2 กม., HII 3 กม., Google ~5 กม.) ตรวจสอบกับเครื่องวัดฝนทุกเครื่องในเขตเมืองของกรุงเทพมหานครและปริมณฑล และจัดทำพยากรณ์ดัชนีความร้อนรายเขต</p></article>
+        <article class="card"><h4><span lang="th">1. ดูหลายโมเดลพร้อมกัน</span><span lang="en">1. Many models side by side</span></h4>
+          <p lang="th">โมเดล 12 ตัวใช้วิธีต่างกัน ทั้งแบบฟิสิกส์และแบบ AI ถ้าหลายโมเดลบอกตรงกันก็มั่นใจได้มากขึ้น ถ้าบอกต่างกันมากแปลว่ายังไม่แน่นอน ใช้ดูร่วมกับโอกาสฝนจากระบบ ensemble 6 ระบบ</p>
+          <p lang="en">12 models use different methods, physics-based and AI. When many models agree you can be more confident; when they differ a lot, the outlook is uncertain. Read this together with the rain chance from 6 ensemble systems.</p></article>
+        <article class="card"><h4><span lang="th">2. บอกว่าเชื่อได้แค่ไหน</span><span lang="en">2. Show how far to trust it</span></h4>
+          <p lang="th">พยากรณ์แต่ละช่วงมีสถิติย้อนหลังกำกับไว้ คิดจากพยากรณ์ที่ออก <b>ก่อน</b> เกิดเหตุการณ์ เทียบกับค่าที่วัดได้จริง ในช่วงเวลาเดียวกับที่เห็นบนหน้าเว็บ</p>
+          <p lang="en">Each forecast period shows its track record, based on forecasts published <b>before</b> the event and compared with real measurements, for the same periods shown on the page.</p></article>
+        <article class="card"><h4><span lang="th">3. ฝนและความร้อนในเมือง</span><span lang="en">3. Rain and heat in the city</span></h4>
+          <p lang="th">ฝนฟ้าคะนองและความร้อนในเมืองต่างกันมากแม้ห่างกันไม่กี่กิโลเมตร ระบบจึงรวมโมเดลละเอียดสูง (TMD WRF 2 กม., HII 3 กม., Google ~5 กม.) เทียบกับเครื่องวัดฝนทุกเครื่องในกรุงเทพฯ และปริมณฑล และพยากรณ์ความร้อนรายเขต</p>
+          <p lang="en">Thunderstorms and heat in a city can differ a lot over a few kilometres. The system adds high-resolution models (TMD WRF 2 km, HII 3 km, Google ~5 km), checks them against every rain gauge in Bangkok and nearby provinces, and forecasts heat by district.</p></article>
       </div>
 
-      <h3>⚙️ กระบวนการทำงาน (อัตโนมัติ ประมาณทุกชั่วโมง)</h3>
-      <ol class="flow">
-        <li><b>รวบรวมผลพยากรณ์</b><span>แบบจำลอง 12 ระบบและ ensemble 6 ระบบ (Open-Meteo), TMD WRF, Google Weather (เฉพาะกรุงเทพมหานคร), HII WRF-ROMS (วันละรอบ) พร้อมบันทึกรอบการประมวลผล</span></li>
-        <li><b>จัดเก็บถาวร</b><span>จัดเก็บผลพยากรณ์ทุกรอบไว้ใน GitHub เพื่อใช้ตรวจสอบย้อนหลัง</span></li>
-        <li><b>รวบรวมค่าตรวจวัด</b><span>สถานีอุตุนิยมวิทยา ~124 แห่ง (ราย 3 ชม. และสรุป 07:00 น.), โทรมาตร ThaiWater ~4,300 เครื่อง (ฝน 24 ชม. และรายชั่วโมง ณ จุดตรวจสอบ), PM2.5 และรายงานจากผู้ใช้</span></li>
-        <li><b>ตรวจสอบความถูกต้อง</b><span>จับคู่ผลพยากรณ์ที่เผยแพร่ก่อนเหตุการณ์กับค่าตรวจวัดในช่วงเดียวกัน ทั้งในมุมมองผู้ใช้งานและตามมาตรฐาน WMO</span></li>
-        <li><b>เผยแพร่</b><span>หน้าเว็บ (GitHub Pages) ปรับปรุงทุกรอบ · ควบคุมรอบการทำงานด้วย cron-job.org โดยมีตารางเวลาของ GitHub เป็นระบบสำรอง</span></li>
+      <h3>⚙️ <span lang="th">ระบบทำงานอย่างไร (อัตโนมัติ ประมาณทุกชั่วโมง)</span><span lang="en">How it works (automatic, about every hour)</span></h3>
+      <ol class="flow" lang="th">
+        <li><b>เก็บพยากรณ์</b><span>โมเดล 12 ตัวและ ensemble 6 ระบบ (Open-Meteo), TMD WRF, Google Weather (เฉพาะกรุงเทพฯ), HII WRF-ROMS (วันละรอบ) พร้อมบันทึกว่าแต่ละโมเดลรันเมื่อไร</span></li>
+        <li><b>เก็บไว้ถาวร</b><span>เก็บพยากรณ์ทุกรอบไว้บน GitHub เพื่อใช้ตรวจย้อนหลัง</span></li>
+        <li><b>เก็บค่าที่วัดได้</b><span>สถานีอุตุนิยมวิทยา ~124 แห่ง (ทุก 3 ชม. และสรุป 07:00 น.), เครื่องวัดฝน ThaiWater ~4,300 เครื่อง, PM2.5 และรายงานจากผู้ใช้</span></li>
+        <li><b>ตรวจความแม่น</b><span>จับคู่พยากรณ์ที่ออกก่อนเหตุการณ์กับค่าที่วัดได้ในช่วงเดียวกัน ทั้งแบบผู้ใช้ทั่วไปและแบบมาตรฐาน WMO</span></li>
+        <li><b>เผยแพร่</b><span>หน้าเว็บ (GitHub Pages) อัปเดตทุกรอบ · ตั้งเวลารันด้วย cron-job.org และมีตารางเวลาของ GitHub เป็นตัวสำรอง</span></li>
+      </ol>
+      <ol class="flow" lang="en">
+        <li><b>Collect forecasts</b><span>12 models and 6 ensembles (Open-Meteo), TMD WRF, Google Weather (Bangkok only), HII WRF-ROMS (once a day), recording when each model ran</span></li>
+        <li><b>Keep them</b><span>Every forecast is kept on GitHub for later checking</span></li>
+        <li><b>Collect measurements</b><span>~124 weather stations (every 3 h, plus the 07:00 daily summary), ~4,300 ThaiWater rain gauges, PM2.5 and user reports</span></li>
+        <li><b>Check accuracy</b><span>Match forecasts published before the event with measurements for the same period, both for everyday users and to the WMO standard</span></li>
+        <li><b>Publish</b><span>The website (GitHub Pages) updates every cycle · runs are scheduled by cron-job.org, with GitHub's own schedule as a backup</span></li>
       </ol>
 
-      <h3>🧭 ลำดับเนื้อหาของหน้าเว็บ</h3>
-      <ul class="about-list">
-        <li><b>📍 ตรงที่ฉันอยู่</b> (ค่าเริ่มต้น) — พยากรณ์ตรงพิกัดของคุณ · แท็บ <b>กรุงเทพมหานคร</b> มี TMD WRF และ Google เพิ่ม</li>
-        <li><b>① ตอนนี้</b> — ค่าวัดจากสถานีใกล้สุด, PM2.5, แผนที่เรดาร์ฝน + สถานีวัดทุกเครื่อง (เลือกชั้นข้อมูลตามหน่วยงานได้)</li>
-        <li><b>② พยากรณ์</b> — ฝน +3 … +24 ชม. และรายวัน (1 วัน = 07:00 → 07:00 น.) จากค่ากลางทุกโมเดล พร้อมป้ายความน่าเชื่อถือ</li>
-        <li><b>③–⑤</b> (กดเปิดดู) — แยกทีละโมเดล, กราฟรายชั่วโมง, รอบรันของแต่ละโมเดล และ 🏆 โมเดลไหนแม่น</li>
+      <h3>🧭 <span lang="th">หน้าเว็บมีอะไรบ้าง</span><span lang="en">What is on the page</span></h3>
+      <ul class="about-list" lang="th">
+        <li><b>📍 ตำแหน่งของผู้ใช้ / เลือกจังหวัด</b> — พยากรณ์ตรงตำแหน่งของคุณหรือจังหวัดที่เลือก (ค่าเริ่มต้น: กรุงเทพมหานคร ซึ่งมี TMD WRF และ Google เพิ่ม)</li>
+        <li><b>① ตอนนี้</b> — ค่าที่วัดได้จากสถานีใกล้ที่สุด, PM2.5, แผนที่เรดาร์ฝนและเครื่องวัดฝนทุกเครื่อง (เลือกดูตามหน่วยงานได้)</li>
+        <li><b>② พยากรณ์</b> — ฝน +3 … +24 ชม. และรายวัน (1 วัน = 07:00 → 07:00 น.) จากค่ากลางของทุกโมเดล พร้อมสถิติว่าเชื่อได้แค่ไหน</li>
+        <li><b>③–⑤</b> (แตะเพื่อเปิด) — แยกทีละโมเดล, กราฟรายชั่วโมง, แต่ละโมเดลรันเมื่อไร และ 🏆 โมเดลไหนแม่น</li>
+      </ul>
+      <ul class="about-list" lang="en">
+        <li><b>📍 Your location / choose a province</b> — forecast for where you are or for a province (default: Bangkok, which also has TMD WRF and Google)</li>
+        <li><b>① Now</b> — measurements from the nearest station, PM2.5, rain radar map and every rain gauge (filter by agency)</li>
+        <li><b>② Forecast</b> — rain +3 … +24 h and by day (1 day = 07:00 → 07:00) from the median of all models, with how far to trust it</li>
+        <li><b>③–⑤</b> (tap to open) — each model separately, hourly charts, when each model ran, and 🏆 which model is right</li>
       </ul>
 
-      <h3>⚖️ กรอบการตรวจสอบความถูกต้อง</h3>
-      <p>การตรวจสอบมี 2 มุมมอง ใช้ค่าตรวจวัดชุดเดียวกัน แต่ตอบคำถามต่างกัน</p>
-      <div class="table-wrap"><table class="about-table">
-        <thead><tr><th></th><th>👤 มุมมองผู้ใช้งาน (ค่าเริ่มต้น)</th><th>🔬 มาตรฐาน WMO (งานวิจัย)</th></tr></thead>
+      <h3>⚖️ <span lang="th">ตรวจความแม่น 2 แบบ</span><span lang="en">Two ways to check accuracy</span></h3>
+      <p><span lang="th">ทั้งสองแบบใช้ค่าที่วัดได้ชุดเดียวกัน แต่ตอบคำถามต่างกัน</span><span lang="en">Both use the same measurements but answer different questions</span></p>
+      <div class="table-wrap"><table class="about-table" lang="th">
+        <thead><tr><th></th><th>👤 สำหรับผู้ใช้ทั่วไป (ค่าเริ่มต้น)</th><th>🔬 มาตรฐาน WMO (งานวิจัย)</th></tr></thead>
         <tbody>
-          <tr><td><b>คำถาม</b></td><td>ผลพยากรณ์ที่แสดงบนหน้าเว็บน่าเชื่อถือเพียงใด</td><td>แบบจำลองใดมีทักษะสูงกว่าเมื่อเปรียบเทียบที่ระยะล่วงหน้าเท่ากัน</td></tr>
-          <tr><td><b>ช่วงเวลา</b></td><td>เหมือนหน้าเว็บ: +3, +6, +12, +24 ชม., พรุ่งนี้, D+3, D+7 นับจากเวลาที่ดึงพยากรณ์</td>
-              <td>T+ ชม. นับจากรอบรันของโมเดล · Day N = ฝน 07–07 น. (00–00 UTC) · ส่วนทั่วประเทศใช้ “ทายไว้ล่วงหน้า ≥ 24/72/168 ชม.”</td></tr>
-          <tr><td><b>สิ่งที่ให้คะแนน</b></td><td>ทุกโมเดล + ค่ากลางทุกโมเดล + โอกาสฝน % (รวมความช้าในการส่งผลของแต่ละโมเดล)</td><td>ทีละโมเดล</td></tr>
-          <tr><td><b>ค่าวัด</b></td><td>จุดตรวจ: โทรมาตรทุกเครื่องในเขตเมือง กทม. + 5 จังหวัดปริมณฑล (ห่างกัน ≥ 2 กม.), อยุธยา และสถานีอุตุฯ ของทั้งสองแห่ง</td>
-              <td>สถานีอุตุฯ ทั่วประเทศ (รายวัน + ราย 3 ชม.) · โทรมาตรทุกเครื่องทั่วประเทศ ~3,200 (รายวัน แยกเมือง/ชานเมือง/ชนบท) · โทรมาตรในเขตเมือง · จุดตรวจ (รวม HII 19–19 น.) · การแจ้งของผู้ใช้</td></tr>
-          <tr><td><b>ภาษาที่แสดง</b></td><td>“บอกว่าตก → ตกจริง x/10”, “ฝนตก → เตือนไว้ y/10”</td><td>CSI, POD, FAR, Bias, MAE</td></tr>
+          <tr><td><b>คำถาม</b></td><td>พยากรณ์ที่เห็นบนหน้าเว็บเชื่อได้แค่ไหน</td><td>โมเดลไหนเก่งกว่า เมื่อเทียบที่เวลาล่วงหน้าเท่ากัน</td></tr>
+          <tr><td><b>ช่วงเวลา</b></td><td>เหมือนบนหน้าเว็บ: +3, +6, +12, +24 ชม., พรุ่งนี้, D+3, D+7 นับจากเวลาที่ได้พยากรณ์</td>
+              <td>T+ ชม. นับจากรอบรันของโมเดล · Day N = ฝน 07–07 น. (00–00 UTC) · ทั่วประเทศใช้ “ทายไว้ล่วงหน้าอย่างน้อย 24/72/168 ชม.”</td></tr>
+          <tr><td><b>ให้คะแนนอะไร</b></td><td>ทุกโมเดล + ค่ากลางของทุกโมเดล + โอกาสฝน % (รวมความช้าที่ผลแต่ละโมเดลออก)</td><td>ทีละโมเดล</td></tr>
+          <tr><td><b>ค่าที่วัดได้</b></td><td>จุดตรวจ: เครื่องวัดฝนทุกเครื่องในเขตเมืองของ กทม. + 5 จังหวัดปริมณฑล (ห่างกันอย่างน้อย 2 กม.), อยุธยา และสถานีอุตุฯ ของทั้งสองแห่ง</td>
+              <td>สถานีอุตุฯ ทั่วประเทศ (รายวัน + ทุก 3 ชม.) · เครื่องวัดฝนทั่วประเทศ ~3,200 เครื่อง (รายวัน แยกเมือง/ชานเมือง/ชนบท) · เครื่องวัดฝนในเขตเมือง · จุดตรวจ (รวม HII 19–19 น.) · รายงานจากผู้ใช้</td></tr>
+          <tr><td><b>แสดงผลแบบ</b></td><td>“บอกว่าตก → ตกจริง x/10”, “ฝนตก → เตือนไว้ y/10”</td><td>CSI, POD, FAR, Bias, MAE</td></tr>
+        </tbody></table>
+        <table class="about-table" lang="en">
+        <thead><tr><th></th><th>👤 For everyone (default)</th><th>🔬 WMO standard (research)</th></tr></thead>
+        <tbody>
+          <tr><td><b>Question</b></td><td>How far can you trust the forecasts on this page?</td><td>Which model is better at the same lead time?</td></tr>
+          <tr><td><b>Periods</b></td><td>As on the page: +3, +6, +12, +24 h, tomorrow, D+3, D+7, counted from when the forecast was fetched</td>
+              <td>T+ hours from the model run · Day N = rain 07–07 (00–00 UTC) · nationwide uses “forecast at least 24/72/168 h ahead”</td></tr>
+          <tr><td><b>What is scored</b></td><td>Every model + the all-model median + rain chance % (including each model's delivery delay)</td><td>Each model separately</td></tr>
+          <tr><td><b>Measurements</b></td><td>Check points: every rain gauge in urban Bangkok + 5 neighbouring provinces (at least 2 km apart), Ayutthaya, and the weather stations of both</td>
+              <td>Weather stations nationwide (daily + every 3 h) · ~3,200 rain gauges nationwide (daily, split urban/suburban/rural) · urban rain gauges · check points (incl. HII 19–19) · user reports</td></tr>
+          <tr><td><b>Shown as</b></td><td>“Said rain → it rained x/10”, “It rained → was warned y/10”</td><td>CSI, POD, FAR, Bias, MAE</td></tr>
         </tbody></table></div>
-      <p class="note">“ฝนตก”: มุมผู้ใช้ ≥ 1 มม. ในช่วงนั้น · WMO ≥ 0.2 มม. ใน 3 ชม. หรือ ≥ 1 มม. ต่อวัน ·
-        เขตเมือง = ความหนาแน่นประชากร ≥ 1,500 คน/ตร.กม. (WorldPop 2020) · รายละเอียดดู “⏱️ กรอบเวลาแบบสากล” ในส่วน ⑤ และหน้า <a href="data.html">📚 ข้อมูลและแหล่งที่มา</a></p>
+      <p class="note"><span lang="th">“ฝนตก”: แบบผู้ใช้ = 1 มม. ขึ้นไปในช่วงนั้น · WMO = 0.2 มม. ขึ้นไปใน 3 ชม. หรือ 1 มม. ขึ้นไปต่อวัน ·
+        เขตเมือง = มีคนอยู่อย่างน้อย 1,500 คน/ตร.กม. (WorldPop 2020) · รายละเอียดดู “⏱️ นับเวลาล่วงหน้าอย่างไร” ในส่วน ⑤ และหน้า</span><span lang="en">“Rain”: for everyone = 1 mm or more in the period · WMO = 0.2 mm or more in 3 h, or 1 mm or more per day ·
+        Urban = at least 1,500 people/km² (WorldPop 2020) · More in “⏱️ How lead time is counted” in section ⑤ and on the</span> <a href="data.html">📚 <span lang="th">ข้อมูลและแหล่งที่มา</span><span lang="en">Data &amp; sources page</span></a></p>
 
-      <h3>🧠 แบบจำลองที่ใช้ <small>เรียงตามความละเอียดเชิงพื้นที่</small></h3>
+      <h3>🧠 <span lang="th">โมเดลที่ใช้ <small>เรียงจากละเอียดที่สุด</small></span><span lang="en">Models used <small>Finest resolution first</small></span></h3>
       <div class="table-wrap" id="about-models"></div>
-      <p class="note">ensemble = การประมวลผลแบบจำลองเดียวกันหลายสิบครั้งโดยรบกวนสภาวะเริ่มต้นเล็กน้อย ใช้ประมาณความน่าจะเป็น (%) · <span id="about-ens"></span></p>
+      <p class="note"><span lang="th">ensemble = รันโมเดลเดียวกันหลายสิบครั้งโดยปรับค่าเริ่มต้นเล็กน้อย เพื่อดูว่ามีโอกาสกี่ % ·</span><span lang="en">Ensemble = the same model run dozens of times with slightly changed starting conditions, to estimate a chance in % ·</span> <span id="about-ens"></span></p>
 
-      <h3>📏 การตีความดัชนี</h3>
-      <ul class="about-list">
-        <li><b>บอกว่าตก → ตกจริง x/10</b> — ถ้าเว็บ/โมเดลบอกว่าฝนตก ตกจริงกี่ใน 10 ครั้ง (ความน่าเชื่อเมื่อเตือน)</li>
-        <li><b>ฝนตก → เตือนไว้ y/10</b> — ถ้าฝนตกจริง ได้เตือนไว้ก่อนกี่ใน 10 ครั้ง (จับฝนได้, เท่ากับ POD)</li>
+      <h3>📏 <span lang="th">อ่านคะแนนอย่างไร</span><span lang="en">How to read the scores</span></h3>
+      <ul class="about-list" lang="th">
+        <li><b>บอกว่าตก → ตกจริง x/10</b> — ถ้าเว็บหรือโมเดลบอกว่าฝนจะตก ตกจริงกี่ครั้งใน 10 ครั้ง</li>
+        <li><b>ฝนตก → เตือนไว้ y/10</b> — ถ้าฝนตกจริง ได้เตือนไว้ก่อนกี่ครั้งใน 10 ครั้ง (เท่ากับ POD)</li>
         <li><b>CSI</b> — ทายว่าตกแล้วตกจริง ÷ (ตกจริงหรือทายว่าตก) ยิ่งสูงยิ่งดี ใช้จัดอันดับ · <b>FAR</b> — ทายว่าตกแต่ไม่ตกกี่ %</li>
-        <li><b>Bias</b> — มากกว่า 1 = ทายว่าตกบ่อยเกิน, น้อยกว่า 1 = ทายน้อยเกิน · <b>MAE</b> — คลาดเคลื่อนเฉลี่ย (มม. หรือ °C)</li>
+        <li><b>Bias</b> — มากกว่า 1 = ทายว่าตกบ่อยเกินไป, น้อยกว่า 1 = ทายน้อยเกินไป · <b>MAE</b> — คลาดเฉลี่ย (มม. หรือ °C)</li>
         <li><b>n</b> — จำนวนครั้งที่ใช้คิด ควรมีอย่างน้อย 30 ครั้ง และมีฝนตกจริงหลายครั้ง ผลจึงจะนิ่ง</li>
       </ul>
-
-      <h3>🔬 งานวิจัยที่ต่อยอดจากโครงการนี้</h3>
-      <ul class="about-list">
-        <li>ตรวจย้อนหลัง มี.ค. 2024 – ส.ค. 2025 ที่สถานีอุตุฯ 119 แห่ง (NOAA GSOD/ISD) เทียบ 9 โมเดล แยกสถานีในเมืองกับชนบท (WorldPop)</li>
-        <li>ข้อมูลที่เก็บต่อจากนี้ (ฝนรายชั่วโมงในเมือง, โมเดลละเอียดสูง, การแจ้งของผู้ใช้) ใช้ตอบว่าโมเดลละเอียดสูงช่วยพยากรณ์ฝนในเมืองได้แค่ไหน</li>
-        <li>ฐานข้อมูลย้อนหลังตั้งแต่ปี 2543 (ค่าตรวจวัด NOAA GHCNh/GSOD ที่สถานีกรมอุตุฯ, ERA5-Land, CHIRPS, IMERG, GSMaP) และพยากรณ์ย้อนหลัง 9 แบบจำลอง
-          ก.ค. 2567 – ก.ย. 2569 สำหรับศึกษาความถูกต้องหลายฤดูกาล · รายละเอียดที่หน้า <a href="data.html">📚 ข้อมูลและแหล่งที่มา</a></li>
+      <ul class="about-list" lang="en">
+        <li><b>Said rain → it rained x/10</b> — when the site or a model said rain, how many times out of 10 it really rained</li>
+        <li><b>It rained → was warned y/10</b> — when it really rained, how many times out of 10 it was forecast (same as POD)</li>
+        <li><b>CSI</b> — correct rain calls ÷ (rained or forecast rain), higher is better, used for ranking · <b>FAR</b> — % of rain calls with no rain</li>
+        <li><b>Bias</b> — above 1 = rain forecast too often, below 1 = too rarely · <b>MAE</b> — average error (mm or °C)</li>
+        <li><b>n</b> — number of cases; you need at least 30, with several real rain events, before results settle</li>
       </ul>
 
-      <h3>⚠️ ข้อจำกัด</h3>
-      <ul class="about-list">
-        <li>เริ่มเก็บข้อมูลบนเว็บเมื่อ 27 ก.ย. 2569 คะแนนช่วงแรกยังไม่นิ่ง และเปลี่ยนตามฤดูกาล</li>
-        <li>ค่าจากโมเดลคือค่าเฉลี่ยของ “ช่องกริด” (2–55 กม.) ไม่ใช่จุดที่คุณยืน · ทุกโมเดลมักทายว่าฝนตกบ่อยเกินจริง</li>
-        <li>สถานีวัดอาจอยู่ห่างจากตำแหน่ง และเครื่องวัดบางหน่วยงานหยุดส่งข้อมูลเป็นช่วง ๆ (ระบบเปลี่ยนไปใช้เครื่องที่ยังรายงานให้เอง)</li>
-        <li>HII เผยแพร่เป็นภาพ ระบบอ่านสีเป็นช่วงปริมาณฝน จึงหยาบกว่าค่าตัวเลข · Google Weather มีเฉพาะ กทม. เพื่อให้อยู่ในโควตาฟรี</li>
-        <li>เป็นค่าจากแบบจำลองคอมพิวเตอร์ <b>ไม่ใช่ประกาศทางการ</b> สำหรับคำเตือนภัยให้ติดตามกรมอุตุนิยมวิทยา</li>
+      <h3>🔬 <span lang="th">งานวิจัยที่ใช้ข้อมูลนี้</span><span lang="en">Research using this data</span></h3>
+      <ul class="about-list" lang="th">
+        <li>ตรวจย้อนหลัง มี.ค. 2567 – ส.ค. 2568 ที่สถานีอุตุฯ 119 แห่ง (NOAA GSOD/ISD) เทียบ 9 โมเดล แยกสถานีในเมืองกับชนบท (WorldPop)</li>
+        <li>ข้อมูลที่เก็บต่อจากนี้ (ฝนรายชั่วโมงในเมือง, โมเดลละเอียดสูง, รายงานจากผู้ใช้) ใช้ตอบว่าโมเดลละเอียดสูงช่วยพยากรณ์ฝนในเมืองได้แค่ไหน</li>
+        <li>ข้อมูลย้อนหลังตั้งแต่ปี 2543 (ค่าที่วัดได้จาก NOAA GHCNh/GSOD ที่สถานีกรมอุตุฯ, ERA5-Land, CHIRPS, IMERG, GSMaP) และพยากรณ์ย้อนหลัง 9 โมเดล
+          ก.ค. 2567 – ก.ย. 2569 สำหรับศึกษาหลายฤดู · รายละเอียดที่หน้า <a href="data.html">📚 ข้อมูลและแหล่งที่มา</a></li>
+      </ul>
+      <ul class="about-list" lang="en">
+        <li>Back-check March 2024 – August 2025 at 119 weather stations (NOAA GSOD/ISD), comparing 9 models, urban vs rural stations (WorldPop)</li>
+        <li>Data collected from now on (hourly city rain, high-resolution models, user reports) will show how much high-resolution models help forecast city rain</li>
+        <li>History since 2000 (NOAA GHCNh/GSOD measurements at Thai Meteorological Department stations, ERA5-Land, CHIRPS, IMERG, GSMaP) and past forecasts from 9 models,
+          July 2024 – September 2026, for multi-season studies · details on the <a href="data.html">📚 Data &amp; sources page</a></li>
       </ul>
 
-      <h3>🔒 ความเป็นส่วนตัว</h3>
-      <ul class="about-list">
-        <li>“📍 ตรงที่ฉันอยู่” ขออนุญาตตำแหน่งจากเบราว์เซอร์ แล้วส่งพิกัดไปที่ Open-Meteo โดยตรงเพื่อขอพยากรณ์ · โครงการนี้ไม่ได้รับหรือเก็บพิกัดของคุณ</li>
-        <li>ถ้าไม่อนุญาตตำแหน่ง หน้าเว็บจะแสดงกรุงเทพมหานครแทน</li>
-        <li>การแจ้งฝนผ่านปุ่ม 🌧️/☀️ บันทึกเป็น GitHub Issue ในโครงการ (สาธารณะ) ตอนนี้รับเฉพาะเจ้าของโครงการ</li>
+      <h3>⚠️ <span lang="th">ข้อจำกัด</span><span lang="en">Limitations</span></h3>
+      <ul class="about-list" lang="th">
+        <li>เริ่มเก็บข้อมูลบนเว็บเมื่อ 27 ก.ย. 2569 คะแนนช่วงแรกยังไม่นิ่ง และเปลี่ยนตามฤดู</li>
+        <li>ค่าจากโมเดลคือค่าเฉลี่ยของ “ช่องตาราง” ขนาด 2–55 กม. ไม่ใช่จุดที่คุณยืน · ทุกโมเดลมักทายว่าฝนตกบ่อยเกินจริง</li>
+        <li>สถานีวัดอาจอยู่ห่างจากตำแหน่ง และเครื่องวัดบางหน่วยงานหยุดส่งข้อมูลเป็นช่วง ๆ (ระบบเปลี่ยนไปใช้เครื่องที่ยังส่งข้อมูลให้เอง)</li>
+        <li>HII เผยแพร่เป็นภาพ ระบบอ่านสีเป็นช่วงปริมาณฝน จึงหยาบกว่าตัวเลข · Google Weather มีเฉพาะกรุงเทพฯ เพื่อให้อยู่ในโควตาฟรี</li>
+        <li>เป็นค่าจากโมเดลคอมพิวเตอร์ <b>ไม่ใช่ประกาศทางการ</b> สำหรับคำเตือนภัยให้ติดตามกรมอุตุนิยมวิทยา</li>
+      </ul>
+      <ul class="about-list" lang="en">
+        <li>Collection for this site started on 27 September 2026, so early scores are still settling and change with the seasons</li>
+        <li>A model value is the average over a “grid box” of 2–55 km, not the exact spot where you stand · every model tends to forecast rain too often</li>
+        <li>The nearest station may be far away, and some agencies' gauges stop reporting for a while (the system switches to gauges that are still reporting)</li>
+        <li>HII publishes images; the system reads the colours as rain ranges, so it is coarser than numbers · Google Weather covers Bangkok only, to stay within the free quota</li>
+        <li>These are computer model values, <b>not official warnings</b>. For warnings, follow the Thai Meteorological Department</li>
       </ul>
 
-      <h3>📚 แหล่งข้อมูล</h3>
+      <h3>🔒 <span lang="th">ความเป็นส่วนตัว</span><span lang="en">Privacy</span></h3>
+      <ul class="about-list" lang="th">
+        <li>“📍 ตำแหน่งของผู้ใช้” ขออนุญาตตำแหน่งจากเบราว์เซอร์ แล้วส่งพิกัดไปที่ Open-Meteo โดยตรงเพื่อขอพยากรณ์ · โครงการนี้ไม่ได้รับหรือเก็บพิกัดของคุณ</li>
+        <li>หน้าเว็บเริ่มที่กรุงเทพมหานคร และจำตำแหน่งหรือจังหวัดที่คุณเลือกไว้ในเครื่องของคุณเท่านั้น</li>
+        <li>รายงานฝนจากปุ่ม 🌧️/☀️ บันทึกเป็น GitHub Issue ของโครงการ (สาธารณะ) ตอนนี้รับเฉพาะเจ้าของโครงการ</li>
+      </ul>
+      <ul class="about-list" lang="en">
+        <li>“📍 Your location” asks your browser for permission, then sends your coordinates straight to Open-Meteo for the forecast · this project never receives or stores them</li>
+        <li>The page starts at Bangkok and remembers your chosen location or province on your own device only</li>
+        <li>Rain reports from the 🌧️/☀️ buttons are saved as public GitHub Issues of the project; for now only the project owner's reports are accepted</li>
+      </ul>
+
+      <h3>📚 <span lang="th">แหล่งข้อมูล</span><span lang="en">Data sources</span></h3>
       <ul class="about-list">
-        <li>พยากรณ์: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0) จาก ECMWF, NOAA, DWD, ECCC, JMA, Météo-France, UK Met Office, CMA ·
+        <li><span lang="th">พยากรณ์:</span><span lang="en">Forecasts:</span> <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0) <span lang="th">จาก</span><span lang="en">from</span> ECMWF, NOAA, DWD, ECCC, JMA, Météo-France, UK Met Office, CMA ·
           <a href="https://data.tmd.go.th/nwpapi/" target="_blank" rel="noopener">TMD WRF</a> · <a href="https://developers.google.com/maps/documentation/weather" target="_blank" rel="noopener">Google Weather API</a> ·
-          <a href="https://www.thaiwater.net/weather/forecast" target="_blank" rel="noopener">HII WRF-ROMS (สสน.)</a></li>
-        <li>ค่าวัดจริง: <a href="https://data.tmd.go.th/" target="_blank" rel="noopener">กรมอุตุนิยมวิทยา</a> · <a href="https://www.thaiwater.net/" target="_blank" rel="noopener">ThaiWater (สสน.)</a> ·
-          <a href="http://air4thai.pcd.go.th/" target="_blank" rel="noopener">Air4Thai (กรมควบคุมมลพิษ)</a> · คุณภาพอากาศ <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener">CAMS</a> ·
-          เรดาร์ <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a></li>
-        <li>งานวิจัย: <a href="https://www.ncei.noaa.gov/" target="_blank" rel="noopener">NOAA GHCNh / GSOD</a> (ค่าวัดย้อนหลัง) · ERA5-Land · CHIRPS · IMERG · GSMaP (ข้อมูลเชิงกริดย้อนหลัง) · <a href="https://www.worldpop.org/" target="_blank" rel="noopener">WorldPop 2020</a> (ความหนาแน่นประชากร, CC BY 4.0) · Open-Meteo Previous Runs (พยากรณ์ย้อนหลัง)</li>
-        <li>รายละเอียดเชิงเทคนิค: <a id="about-docs" target="_blank" rel="noopener">หลักการของแต่ละโมเดลและวิธีวัดความแม่น</a> · <a id="about-repo" target="_blank" rel="noopener">โค้ดทั้งหมด (GitHub)</a></li>
+          <a href="https://www.thaiwater.net/weather/forecast" target="_blank" rel="noopener">HII WRF-ROMS</a></li>
+        <li><span lang="th">ค่าที่วัดได้:</span><span lang="en">Measurements:</span> <a href="https://data.tmd.go.th/" target="_blank" rel="noopener"><span lang="th">กรมอุตุนิยมวิทยา</span><span lang="en">Thai Meteorological Department</span></a> · <a href="https://www.thaiwater.net/" target="_blank" rel="noopener">ThaiWater (<span lang="th">สสน.</span><span lang="en">HII</span>)</a> ·
+          <a href="http://air4thai.pcd.go.th/" target="_blank" rel="noopener">Air4Thai (<span lang="th">กรมควบคุมมลพิษ</span><span lang="en">Pollution Control Department</span>)</a> · <span lang="th">คุณภาพอากาศ</span><span lang="en">air quality</span> <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener">CAMS</a> ·
+          <span lang="th">เรดาร์</span><span lang="en">radar</span> <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a></li>
+        <li><span lang="th">งานวิจัย:</span><span lang="en">Research:</span> <a href="https://www.ncei.noaa.gov/" target="_blank" rel="noopener">NOAA GHCNh / GSOD</a> <span lang="th">(ค่าที่วัดได้ย้อนหลัง)</span><span lang="en">(past measurements)</span> · ERA5-Land · CHIRPS · IMERG · GSMaP <span lang="th">(ข้อมูลกริดย้อนหลัง)</span><span lang="en">(past gridded data)</span> ·
+          <a href="https://www.worldpop.org/" target="_blank" rel="noopener">WorldPop 2020</a> <span lang="th">(ความหนาแน่นประชากร, CC BY 4.0)</span><span lang="en">(population density, CC BY 4.0)</span> · Open-Meteo Previous Runs <span lang="th">(พยากรณ์ย้อนหลัง)</span><span lang="en">(past forecasts)</span></li>
+        <li><span lang="th">รายละเอียดเชิงเทคนิค:</span><span lang="en">Technical details:</span> <a id="about-docs" target="_blank" rel="noopener"><span lang="th">หลักการของแต่ละโมเดลและวิธีวัดความแม่น</span><span lang="en">how each model works and how accuracy is measured</span></a> · <a id="about-repo" target="_blank" rel="noopener"><span lang="th">โค้ดทั้งหมด (GitHub)</span><span lang="en">all code (GitHub)</span></a></li>
       </ul>
     </section>
   </main>
 
   <footer class="wrap foot">
-    <p>ข้อมูล: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0) จาก ECMWF, NOAA, DWD, ECCC, JMA, Météo-France, UK Met Office, CMA ·
-      <a href="https://data.tmd.go.th/nwpapi/" target="_blank" rel="noopener">กรมอุตุนิยมวิทยา (TMD WRF)</a> ·
-      คุณภาพอากาศ <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener">CAMS</a> ·
-      ค่าวัดจริง: <a href="https://data.tmd.go.th/" target="_blank" rel="noopener">สถานีกรมอุตุฯ</a>, <a href="http://air4thai.pcd.go.th/" target="_blank" rel="noopener">Air4Thai (คพ.)</a> ·
-      เรดาร์ <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a></p>
-<p class="foot-org"><span class="inst-logos"><img src="img/logo-ku.png" alt="มหาวิทยาลัยเกษตรศาสตร์" height="32"><img src="img/logo-sis.png" alt="วิทยาลัยบูรณาการศาสตร์" height="32"></span>
-      BURANA (บูรณา) พัฒนาโดย วิทยาลัยบูรณาการศาสตร์ มหาวิทยาลัยเกษตรศาสตร์</p>
-    <p>ผลพยากรณ์เป็นผลจากแบบจำลองเชิงตัวเลข มิใช่ประกาศอย่างเป็นทางการ · <a id="docs-link" target="_blank" rel="noopener">หลักการของแต่ละแบบจำลอง</a> · <a id="repo-link" target="_blank" rel="noopener">รหัสต้นฉบับ</a> · <a href="data.html">ข้อมูลและแหล่งที่มา</a></p>
+    <p><span lang="th">ข้อมูล:</span><span lang="en">Data:</span> <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0) <span lang="th">จาก</span><span lang="en">from</span> ECMWF, NOAA, DWD, ECCC, JMA, Météo-France, UK Met Office, CMA ·
+      <a href="https://data.tmd.go.th/nwpapi/" target="_blank" rel="noopener"><span lang="th">กรมอุตุนิยมวิทยา</span><span lang="en">Thai Meteorological Department</span> (TMD WRF)</a> ·
+      <span lang="th">คุณภาพอากาศ</span><span lang="en">air quality</span> <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener">CAMS</a> ·
+      <span lang="th">ค่าที่วัดได้:</span><span lang="en">measurements:</span> <a href="https://data.tmd.go.th/" target="_blank" rel="noopener"><span lang="th">สถานีกรมอุตุฯ</span><span lang="en">TMD stations</span></a>, <a href="http://air4thai.pcd.go.th/" target="_blank" rel="noopener">Air4Thai</a> ·
+      <span lang="th">เรดาร์</span><span lang="en">radar</span> <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a></p>
+    <p class="foot-org"><span class="inst-logos"><img src="img/logo-ku.png" alt="มหาวิทยาลัยเกษตรศาสตร์" data-en-alt="Kasetsart University" height="32"><img src="img/logo-sis.png" alt="วิทยาลัยบูรณาการศาสตร์" data-en-alt="School of Integrated Science" height="32"></span>
+      <span lang="th">BURANA (บูรณา) พัฒนาโดย วิทยาลัยบูรณาการศาสตร์ มหาวิทยาลัยเกษตรศาสตร์</span><span lang="en">BURANA is developed by the School of Integrated Science, Kasetsart University</span></p>
+    <p><span lang="th">พยากรณ์ในหน้านี้มาจากโมเดลคอมพิวเตอร์ ไม่ใช่ประกาศทางการ</span><span lang="en">Forecasts on this page come from computer models and are not official warnings</span> ·
+      <a id="docs-link" target="_blank" rel="noopener"><span lang="th">หลักการของแต่ละโมเดล</span><span lang="en">How each model works</span></a> · <a id="repo-link" target="_blank" rel="noopener"><span lang="th">โค้ด</span><span lang="en">Source code</span></a> ·
+      <a href="data.html"><span lang="th">ข้อมูลและแหล่งที่มา</span><span lang="en">Data &amp; sources</span></a></p>
   </footer>
 
   <div id="tooltip" class="tooltip" role="status" hidden></div>
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
