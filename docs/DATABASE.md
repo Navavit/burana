@@ -28,6 +28,7 @@ flowchart LR
     S9["NOAA GHCNh / GSOD · METAR (IEM)<br/>สถานีรายชั่วโมง/รายวัน 2000–"]
     S10["ERA5-Land · CHIRPS · IMERG · GSMaP<br/>GEE · Open-Meteo · CHC"]
     S11["Open-Meteo Previous Runs<br/>พยากรณ์ย้อนหลัง 2024–2026"]
+    S12["เซนเซอร์ของผู้ใช้<br/>ThingsBoard"]
   end
 
   subgraph HOURLY["รอบรายชั่วโมง · collect.yml"]
@@ -48,6 +49,7 @@ flowchart LR
     D5["wxdb history · reanalysis<br/>รายเดือน"]
     D6["wxdb qc · reconcile<br/>วันละครั้ง"]
     D7["wxdb prevruns<br/>วันละ 2 รอบจนครบ"]
+    D8["wxdb sensor<br/>วันละ 2 รอบ"]
     R3[("Release db-prevruns<br/>พยากรณ์ย้อนหลัง")]
     R1[("Release db-YYYY-MM<br/>ตารางข้อเท็จจริง")]
     R2[("Release db-history<br/>ข้อมูลย้อนหลังรายปี")]
@@ -60,6 +62,7 @@ flowchart LR
     D4 --> R1
     D5 --> R2
     D7 --> R3
+    D8 --> R1
     R1 --> D6 --> R1
   end
 
@@ -74,6 +77,7 @@ flowchart LR
   S3 --> D4
   S9 & S10 --> D5
   S11 --> D7
+  S12 --> D8
   C2 --> D2
   R0 & R1 & R2 & R3 --> U1 --> U2
   U1 --> U3
@@ -648,6 +652,7 @@ python scripts/build_db_docs.py                # สร้าง ER และพ
 | `thaiwater` | [ThaiWater (คลังข้อมูลน้ำแห่งชาติ)](https://www.thaiwater.net/) | สถาบันสารสนเทศทรัพยากรน้ำ (สสน.) | station_network | เปิดเผยตามเงื่อนไขของ สสน. |
 | `air4thai` | [Air4Thai](http://air4thai.pcd.go.th/) | กรมควบคุมมลพิษ | station_network | เปิดเผย |
 | `noaa_ghcnh` | [NOAA Global Historical Climatology Network – hourly (GHCNh)](https://www.ncei.noaa.gov/products/global-historical-climatology-network-hourly) | NOAA NCEI | station_network | สาธารณสมบัติ (US Gov) |
+| `pfal_sis_ku` | เซนเซอร์ภายนอกอาคาร PFAL SIS KU (มก. บางเขน) | PFAL SIS KU (เซนเซอร์ของผู้ใช้) | private_sensor | ใช้ภายในโครงการ (ได้รับอนุญาตจากเจ้าของเซนเซอร์) |
 | `iem_metar` | [METAR สนามบินในประเทศไทย (Iowa Environmental Mesonet)](https://mesonet.agron.iastate.edu/request/download.phtml?network=TH__ASOS) | Iowa State University (จากรายงานของ บวท./กรมอุตุนิยมวิทยา) | station_network | เปิดเผย (อ้างอิง IEM) |
 | `noaa_gsod` | [NOAA Global Surface Summary of the Day (GSOD)](https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.ncdc:C00516) | NOAA NCEI | station_network | สาธารณสมบัติ (US Gov) |
 | `user` | รายงานฝนจากผู้ใช้ | ผู้ใช้ระบบ (GitHub Issues) | crowd | CC BY 4.0 |

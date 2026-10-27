@@ -27,7 +27,7 @@
 flowchart LR
   subgraph SRC["แหล่งข้อมูล"]
     direction TB
-    S1["ค่าตรวจวัดในประเทศ<br/>กรมอุตุนิยมวิทยา · ThaiWater · Air4Thai<br/>รายงานฝนจากผู้ใช้"]
+    S1["ค่าตรวจวัดในประเทศ<br/>กรมอุตุนิยมวิทยา · ThaiWater · Air4Thai<br/>รายงานฝนและเซนเซอร์ของผู้ใช้"]
     S2["แบบจำลองพยากรณ์<br/>ระดับโลก · ensemble · ระดับภูมิภาค"]
     S3["ข้อมูลย้อนหลังตั้งแต่ 2000<br/>สถานี NOAA/สนามบิน · reanalysis · ดาวเทียม"]
   end
@@ -62,6 +62,7 @@ flowchart LR
 | ฝนจากดาวเทียม IMERG / GSMaP รายวัน (2000–) | ดึงในเครื่องผู้ดูแล (GEE) | `python -m wxdb reanalysis --source gee --datasets imerg gsmap` | ตาราง `reanalysis_daily` |
 | รวมไฟล์รายเดือนและลดขนาดคลังระยะสั้น | รายเดือน | `python -m wxdb pack`, `prune` | `<table>__YYYY-MM.parquet` |
 | ซ่อม manifest (ไฟล์ที่หลุดจากการบันทึกพร้อมกัน) | วันละครั้ง | `python -m wxdb reconcile` | `manifest.json` |
+| เซนเซอร์ของผู้ใช้ (ThingsBoard; ต้องตั้ง secret `PFAL_PUBLIC_ID`) | วันละ 2 รอบ | `python -m wxdb sensor` | ตาราง `observation` |
 | ทดสอบพยากรณ์ภัยความร้อนย้อนหลังที่สถานีใน กทม. → ค่าปรับแก้ของโมดูลภัยความร้อน | เมื่อมีข้อมูลฤดูร้อนใหม่ (สั่งรันเอง) | `analysis/heat_forecast_backtest.ipynb` | `resources/heatsafe_calibration.json`, `analysis/heat_backtest/` |
 
 ## 2. โครงสร้างฐานข้อมูล (ER diagram)
@@ -203,6 +204,7 @@ con.sql("SELECT * FROM observation WHERE site_id = 'tmd:48455' AND var_id = 't2m
 | Ensemble | ECMWF ENS, ECMWF AIFS ENS, NOAA GEFS, NOAA AIGEFS, UKMO MOGREPS-G, ECCC GEPS | ความน่าจะเป็นฝน |
 | ค่าตรวจวัด | กรมอุตุนิยมวิทยา (ราย 3 ชม., รายวัน) · ThaiWater (รายชั่วโมง, 24 ชม.) · Air4Thai (PM2.5, PM10, O3, CO, NO2, SO2, AQI) · รายงานผู้ใช้ | ตามสถานี |
 | ค่าตรวจวัดย้อนหลัง | NOAA GHCNh 46–160 สถานีในประเทศไทย (2000–ปัจจุบัน) | รายชั่วโมง |
+| เซนเซอร์ของผู้ใช้ | อุณหภูมิและความชื้นภายนอกอาคาร PFAL SIS KU มก. บางเขน (ThingsBoard, ตั้งแต่ 24 มิ.ย. 2026, `site_id = sensor:pfal_sis_ku`) | ทุก ~5 นาที |
 | ค่าตรวจวัดรายชั่วโมงของสนามบิน | METAR 39 สนามบินผ่าน Iowa Environmental Mesonet (2000–ปัจจุบัน, `site_id = metar:<ICAO>`) | รายชั่วโมง |
 | ค่าตรวจวัดรายวันย้อนหลัง | NOAA GSOD 66–133 สถานีของกรมอุตุนิยมวิทยา (2000–ส.ค. 2025) รวมในจุดเดียวกับสถานีของกรม (`tmd:<WMO>`) | รายวัน |
 | ข้อมูลเชิงกริดย้อนหลัง | ERA5-Land (0.1°) และ CHIRPS v2.0 (0.05°) ณ จุดศูนย์กลางเซลล์ th025 (2000–ปัจจุบัน) | รายวัน |

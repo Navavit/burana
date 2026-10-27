@@ -64,6 +64,21 @@ DATASETS = [
      "native": "ตามเหตุการณ์", "update": "ทันทีที่สร้าง issue (observe.yml)", "latency": "< 5 นาที",
      "storage": "branch data: observations/ · ฐานข้อมูล: observation (var_id = rain_flag)",
      "use": "การตรวจสอบพยากรณ์ฝนเชิงเหตุการณ์", "limits": "รับเฉพาะบัญชีเจ้าของ repository · พิกัดในฐานข้อมูลปัดเป็น 0.01°", "live": "user"},
+    {"id": "sensor_pfal", "group": "obs", "name": "เซนเซอร์ภายนอกอาคาร PFAL SIS KU (มก. บางเขน)",
+     "provider": "PFAL SIS KU (เซนเซอร์ของผู้ใช้ ผ่านแพลตฟอร์ม ThingsBoard)", "url": "", "license": "ใช้ภายในโครงการ (ได้รับอนุญาตจากเจ้าของเซนเซอร์)",
+     "variables": "อุณหภูมิอากาศ (°C), ความชื้นสัมพัทธ์ (%)", "spatial": "1 จุด หน้าอาคาร PFAL มหาวิทยาลัยเกษตรศาสตร์ บางเขน (13.847, 100.570)",
+     "native": "ทุก ~5 นาที", "update": "วันละ 2 รอบ (database.yml) ย้อนหลัง 3 วัน", "latency": "< 1 วัน",
+     "storage": "ฐานข้อมูล: observation (site_id = sensor:pfal_sis_ku, source_id = pfal_sis_ku)",
+     "use": "ค่าตรวจวัดเสริมในเขตเมืองตอนเหนือของกรุงเทพมหานคร · ภูมิอากาศจุลภาค",
+     "limits": "ไม่ใช่สถานีมาตรฐาน WMO · ช่วง 08:00–13:00 น. สูงกว่าสถานีอ้างอิง ~1–2 °C (อาจโดนแดดตอนเช้า) · ส.ค.–ก.ย. 2569 รายงานห่าง และขาด 4–25 ต.ค. 2569",
+     "live": "sensor_pfal"},
+    {"id": "metar", "group": "obs", "name": "รายงาน METAR ของสนามบิน (IEM)",
+     "provider": "Iowa Environmental Mesonet (จากรายงานของ บวท./กรมอุตุนิยมวิทยา)", "url": "https://mesonet.agron.iastate.edu/request/download.phtml?network=TH__ASOS",
+     "license": "เปิดเผย (อ้างอิง IEM)", "variables": "อุณหภูมิ, จุดน้ำค้าง, ความชื้นสัมพัทธ์, ลมและลมกระโชก, ทัศนวิสัย",
+     "spatial": "39 สนามบินทั่วประเทศ", "native": "รายชั่วโมง (เก็บรายงานนาที :00)", "update": "รายเดือน (ปีปัจจุบัน)", "latency": "~1 ชม. ที่ต้นทาง",
+     "storage": "ฐานข้อมูล: release db-history → observation__metar_<ปี>.parquet (site_id = metar:<ICAO>)",
+     "use": "อนุกรมรายชั่วโมงของสนามบิน 2000–ปัจจุบัน · ทดสอบพยากรณ์ความร้อนที่ดอนเมือง/สุวรรณภูมิ",
+     "limits": "เครือข่ายเปลี่ยนตามปี (26–37 สนามบิน) · พิกัดสุวรรณภูมิของ IEM ผิด แก้ด้วยพิกัดจริง", "live": "metar"},
     {"id": "ghcnh", "group": "hist", "name": "ค่าตรวจวัดรายชั่วโมงย้อนหลัง NOAA GHCNh",
      "provider": "NOAA National Centers for Environmental Information", "url": "https://www.ncei.noaa.gov/products/global-historical-climatology-network-hourly",
      "license": "สาธารณสมบัติ (U.S. Government)",
@@ -188,6 +203,8 @@ SOURCE_UPDATE = {
     "tw_check": ("ทุก 10–60 นาทีแล้วแต่หน่วยงานเจ้าของเครื่อง · ThaiWater เก็บรายชั่วโมงย้อนหลังเพียง ~36 ชม.", "~10–60 นาที"),
     "air4thai": ("รายชั่วโมง", "~20–60 นาที"),
     "user": ("ตามเหตุการณ์", "ทันที"),
+    "sensor_pfal": ("ทุก ~5 นาที", "ทันที (ระบบดึงวันละ 2 รอบ)"),
+    "metar": ("ทุก 30–60 นาที", "~1 ชม."),
     "ghcnh": ("NCEI ปรับปรุงไฟล์รายปีทุกวัน", "~3 วัน"),
     "gsod": ("หยุดปรับปรุง ส.ค. 2568", "–"),
     "era5land": ("ECMWF/Copernicus ปรับปรุงรายวัน (ERA5T) · ชุด DAILY_AGGR ใน Google Earth Engine ปรับปรุงตามมา", "~5 วัน (ECMWF) · ~1–2 สัปดาห์ (GEE)"),
@@ -305,6 +322,8 @@ def live_stats(archive, man):
     live["tw_check"] = {"count": len(tw), "active": sum(p.get("active", True) for p in tw), **{k: v for k, v in _obs_stats(a, "tw1h").items() if k != "count"}}
     obs = sorted((a / "observations").glob("*.json"))
     live["user"] = {"count": len(obs)}
+    live["sensor_pfal"] = {"count": 1, "first": "2026-06-24"}
+    live["metar"] = {**_span(man, "observation", "db-history", "metar"), "count": 39}
     nat = [p for p in pts if p.get("national")]
     loc = [p for p in pts if not p.get("national")]
     live["om_locations"] = {"count": len(loc) + len(core.resolve_locations()), "models": len(core.active_models()) + 2,

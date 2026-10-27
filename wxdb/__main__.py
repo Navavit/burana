@@ -24,7 +24,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from . import catalog, etl, grid, gsod, history, metar, points, prevruns, qc, reanalysis, schema, store
+from . import catalog, etl, grid, gsod, history, metar, points, prevruns, qc, reanalysis, schema, sensor, store
 
 
 def _load_dim(name, workdir):
@@ -338,6 +338,26 @@ def cmd_qc(a):
             store.publish_facts(parts)
 
 
+def cmd_sensor(a):
+    """ค่าตรวจวัดจากเซนเซอร์ของผู้ใช้ (ThingsBoard) → observation ในไฟล์รายวันของเดือนนั้น (pack ตัดแถวซ้ำภายหลัง)"""
+    now = pd.Timestamp.now(tz="UTC").tz_localize(None)
+    with tempfile.TemporaryDirectory() as d:
+        parts, sites = [], []
+        for sid, s in sensor.SENSORS.items():
+            start = pd.Timestamp(a.start or s["since"] if a.start or a.all else now.normalize() - pd.Timedelta(days=a.days))
+            df = sensor.fetch(sid, start, now)
+            if df is None or not len(df):
+                continue
+            print(f"{sid}: {len(df):,} ค่า · {df.time.min():%Y-%m-%d %H:%M} – {df.time.max():%Y-%m-%d %H:%M} UTC")
+            parts += [("observation", m, p) for m, p in store.write_fact(df, "observation", d, suffix=sid)]
+            sites.append(sensor.site_rows().assign(seen=df.time.max()))
+        if not parts:
+            return
+        man = store.publish_facts(parts)
+        old = _load_dim("site", d)
+        store.publish_dims({"site": etl.merge_sites(old, sites)}, d, man)
+
+
 def cmd_reconcile(a):
     """ซ่อม manifest: ลงทะเบียนไฟล์ใน release ที่ไม่อยู่ใน manifest"""
     added = store.reconcile()
@@ -397,6 +417,11 @@ def main(argv=None):
     q.add_argument("--to", dest="end")
     q.add_argument("--dry-run", action="store_true")
     q.set_defaults(fn=cmd_qc)
+    sn = s.add_parser("sensor")
+    sn.add_argument("--days", type=int, default=3, help="ดึงย้อนหลังกี่วัน (ค่าเริ่มต้น 3)")
+    sn.add_argument("--from", dest="start")
+    sn.add_argument("--all", action="store_true", help="ดึงตั้งแต่วันแรกของเซนเซอร์")
+    sn.set_defaults(fn=cmd_sensor)
     s.add_parser("reconcile").set_defaults(fn=cmd_reconcile)
     s.add_parser("status").set_defaults(fn=cmd_status)
     a = p.parse_args(argv)
