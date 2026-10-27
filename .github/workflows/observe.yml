@@ -1,24 +1,28 @@
 # อ่าน issue "บันทึกฝน" (จากปุ่ม 🌧️/☀️ บนหน้าเว็บ) → เก็บลง branch data → ตอบกลับและปิด issue
 # รับเฉพาะ issue ของเจ้าของ repo เพื่อกันคนอื่นส่งข้อมูลปลอม
+# สั่งรันเอง (workflow_dispatch) = เก็บตก issue บันทึกฝนที่ยังเปิดค้างทั้งหมด
 name: บันทึกฝนจาก issue
 
 on:
   issues:
     types: [opened]
+  workflow_dispatch:
 
 permissions:
   contents: write
   issues: write
 
+# คิวแยกต่อ issue ไม่ใช้กลุ่ม data-branch ร่วมกับรอบดึงข้อมูล: ในกลุ่มเดียวกัน GitHub ให้รอคิวได้ทีละรอบ
+# งานบันทึกฝนที่รออยู่จึงถูกยกเลิกเมื่อรอบดึงข้อมูลรอบถัดไปเข้าคิว · การ push ชนกันใช้ pull --rebase ใน push_data.sh
 concurrency:
-  group: data-branch
+  group: rain-obs-${{ github.event.issue.number || 'sweep' }}
   cancel-in-progress: false
 
 jobs:
   record:
-    if: contains(github.event.issue.labels.*.name, 'rain-obs') && github.event.issue.author_association == 'OWNER'
+    if: github.event_name == 'workflow_dispatch' || (contains(github.event.issue.labels.*.name, 'rain-obs') && github.event.issue.author_association == 'OWNER')
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     env:
       GH_TOKEN: ${{ github.token }}
       ISSUE: ${{ github.event.issue.number }}
@@ -34,20 +38,26 @@ jobs:
 
       - run: scripts/data_worktree.sh
 
-      - name: อ่านฟอร์ม
-        shell: bash                    # ใช้ pipefail เพื่อไม่ให้ | tee กลบ error ของ python
-        run: python collector.py observe-issue --event "$GITHUB_EVENT_PATH" --out archive | tee result.md
-
-      - name: บันทึกลง branch data
-        run: scripts/push_data.sh "observation-$ISSUE"
-
-      - name: ตอบกลับและปิด issue
+      - name: บันทึกและปิด issue
+        shell: bash
         run: |
-          gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body-file result.md
-          gh issue close "$ISSUE" --repo "$GITHUB_REPOSITORY" --reason completed
-
-      - name: แจ้งเมื่อบันทึกไม่สำเร็จ
-        if: failure()
-        run: |
-          gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" \
-            --body "⚠️ บันทึกไม่สำเร็จ — ตรวจช่อง \"ฝนตกไหม\" (ตก/ไม่ตก), พิกัด และเวลา แล้วแก้ issue นี้หรือส่งใหม่ (ดู log ที่แท็บ Actions)"
+          if [ -n "$ISSUE" ]; then
+            nums="$ISSUE"
+          else
+            owner="${GITHUB_REPOSITORY%%/*}"
+            nums=$(gh issue list --repo "$GITHUB_REPOSITORY" --label rain-obs --state open --author "$owner" -L 100 --json number -q '.[].number' | sort -n)
+          fi
+          fail=0
+          for n in $nums; do
+            gh api "repos/$GITHUB_REPOSITORY/issues/$n" | python -c "import json,sys; print(json.dumps({'issue': json.load(sys.stdin)}))" > event.json
+            if python collector.py observe-issue --event event.json --out archive > result.md \
+               && scripts/push_data.sh "observation-$n"; then
+              gh issue comment "$n" --repo "$GITHUB_REPOSITORY" --body-file result.md
+              gh issue close "$n" --repo "$GITHUB_REPOSITORY" --reason completed
+            else
+              fail=1
+              gh issue comment "$n" --repo "$GITHUB_REPOSITORY" \
+                --body "⚠️ บันทึกไม่สำเร็จ — ตรวจช่อง \"ฝนตกไหม\" (ตก/ไม่ตก), พิกัด และเวลา แล้วแก้ issue นี้หรือส่งใหม่ (ดู log ที่แท็บ Actions)"
+            fi
+          done
+          exit $fail
