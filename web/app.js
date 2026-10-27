@@ -730,17 +730,20 @@ function renderNow() {
 // ---------------------------------------------------------------------------
 // โมเดลไหนแม่น: คะแนนจากการเทียบกับค่าวัดจริง (data/verification.json)
 // ---------------------------------------------------------------------------
-// (สถานีอุตุฯ ใกล้ตำแหน่ง tmd3h ยังคำนวณอยู่ แต่ซ้ำกับส่วนทั่วประเทศ จึงไม่แสดง)
+// แหล่งค่าวัดในโหมด WMO (สถานีอุตุฯ ใกล้ตำแหน่ง tmd3h ยังคำนวณอยู่ แต่ซ้ำกับส่วนทั่วประเทศ จึงไม่แสดง)
 const V_SOURCES = [
   { key: "national", icon: "🗺️", title: T("สถานีอุตุนิยมวิทยาทั่วประเทศ", "Weather stations nationwide"),
+    desc: T("~120 สถานี และเครื่องวัดฝน ~3,200 เครื่อง · เมืองเทียบชนบท", "~120 stations and ~3,200 rain gauges · urban vs rural"),
     vars: [["national_rain", T("ฝนรายวัน", "Daily rain")], ["national3h_rain", T("ฝน 3 ชม.", "3-hour rain")], ["national_tmin", T("อุณหภูมิต่ำสุด", "Min temperature")],
       ["national_tmax", T("อุณหภูมิสูงสุด", "Max temperature")], ["national3h_temp", T("อุณหภูมิ 3 ชม.", "3-hour temperature")],
       ["allgauge_rain", T("ฝนรายวัน · เครื่องวัดฝนทุกเครื่อง", "Daily rain · every rain gauge")]],
     wait: T("คำนวณวันละครั้ง หลังกรมอุตุนิยมวิทยาสรุปค่า 07:00 น.", "Calculated once a day, after the Thai Meteorological Department's 07:00 summary") },
   { key: "tw", icon: "🏙️", title: T("เครื่องวัดฝนในเมือง", "Rain gauges in the city"),
+    desc: T("เครื่องวัดฝนทุกเครื่องในเขตเมือง และจุดตรวจ กทม./อยุธยา · โมเดลละเอียดสูง", "Every urban rain gauge, and the Bangkok/Ayutthaya check points · high-resolution models"),
     vars: [["urbangauge_rain", T("ฝนรายวัน · ทุกเครื่องในเขตเมือง", "Daily rain · every urban gauge")], ["thaiwater24h_rain", T("ฝนรายวัน · จุดตรวจ", "Daily rain · check points")],
       ["tw3h_rain", T("ฝน 3 ชม.", "3-hour rain")], ["hii24h_rain", T("ฝน 19–19 น. (เทียบ HII)", "Rain 19–19 (vs HII)")]], kind: "tw",
     wait: T("ใช้รอบรันที่เริ่มก่อนช่วงที่วัด · HII ออกวันละรอบ 19:00 น.", "Uses runs that started before the measured period · HII is published once a day at 19:00") },
+  { key: "user", icon: "🙋", title: T("รายงานจากผู้ใช้", "User reports"), desc: T("ฝนตก / ไม่ตก จากปุ่มด้านบน", "Rain / no rain from the buttons above"),
     vars: [["user_rain", T("ฝนตก/ไม่ตก", "Rain/no rain")]], wait: T("ยังไม่มีรายงานจากผู้ใช้", "No user reports yet") },
 ];
 function leadText(l) {

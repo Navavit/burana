@@ -69,6 +69,7 @@ flowchart LR
   subgraph USE["การใช้ข้อมูล"]
     direction TB
     U1["DuckDB / pandas<br/>wxdb.connect()"]
+    U3["analysis/<br/>heat_forecast_backtest"]
     U2["งานประยุกต์ เช่น HEAT-SAFE Bangkok<br/>(pip install wxdb ตรึง tag)"]
   end
 

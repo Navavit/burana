@@ -26,7 +26,7 @@
 🌐 **หน้าเว็บ** (ปรับปรุงทุกชั่วโมง): https://navavit.github.io/burana/ ·
 🗄️ **ฐานข้อมูล:** [docs/DATABASE.md](docs/DATABASE.md) ·
 📖 **แบบจำลองและวิธีการ:** [docs/MODELS.md](docs/MODELS.md) ·
-⏱️ **การตั้งเวลา:** [docs/SCHEDULER.md](docs/SCHEDULER.md) ·
+⏱️ **การตั้งเวลา:** [docs/SCHEDULER.md](docs/SCHEDULER.md)
 
 ระบบนี้เป็นขั้นตอนหนึ่งของโครงการวิจัย **HEAT-SAFE Bangkok** (วช. 2570) โดยทำหน้าที่จัดหาข้อมูลพยากรณ์ ข้อมูลสถานี และผลทดสอบย้อนหลัง พร้อมพยากรณ์ภัยความร้อนรายเขตของกรุงเทพมหานคร ทั้งนี้ออกแบบให้ใช้ซ้ำในงานวิจัยอื่นได้
 
@@ -241,6 +241,8 @@ Consolidated_Weather/
 ├── wxdb/                     # ฐานข้อมูลระยะยาว: schema, catalog, etl, grid, store, CLI
 ├── web/                      # หน้าเว็บ (index.html, app.js, style.css) — GitHub Pages
 ├── resources/                # gauges.csv, bkk_districts.csv, th_provinces.csv, grid_th025.csv, heatsafe_calibration.json
+├── analysis/                 # ทดสอบพยากรณ์ภัยความร้อนย้อนหลัง (สร้างค่าปรับแก้ของโมดูลภัยความร้อน)
+├── docs/                     # DATABASE.md, MODELS.md, SCHEDULER.md
 ├── scripts/                  # build_grid.py, build_provinces.py, build_db_docs.py, สคริปต์จัดการ branch data
 ├── .github/workflows/        # collect.yml (รายชั่วโมง), database.yml (ฐานข้อมูล), location.yml, observe.yml
 ├── config.json               # ตำแหน่งและค่ากำหนด (เผยแพร่)
@@ -303,6 +305,7 @@ pip install earthengine-api                     # (เฉพาะในเค�
 ### 6.4 การประเมินความถูกต้อง
 คะแนนตามแนวทาง WMO ได้แก่ MAE, RMSE, ความเอนเอียง, POD, FAR, CSI, frequency bias และ Brier score แยกตามแบบจำลอง ระยะล่วงหน้า และเครือข่ายตรวจวัด รายละเอียดอยู่ใน [docs/MODELS.md § 5](docs/MODELS.md#5-การวัดความแม่นยำ-verification) คู่พยากรณ์–ค่าตรวจวัดทั้งหมดจัดเก็บในตาราง `verification_pair` เพื่อคำนวณคะแนนใหม่ด้วยเกณฑ์อื่นได้
 
+สำหรับงานวิจัย ฟังก์ชันมาตรฐานอยู่ใน `wxdb/verify.py` (ETS, SEDI, FBI, Brier/reliability, Fractions Skill Score และช่วงความเชื่อมั่นแบบ block bootstrap รวมถึงผลต่างแบบจับคู่ระหว่างแบบจำลอง) ใช้ร่วมกับพยากรณ์ย้อนหลัง (`forecast_prevrun`) และค่าตรวจวัดในฐานข้อมูลได้ทันที ควรคัดค่าตรวจวัดของโทรมาตรที่มีธงคุณภาพ (`observation_qc`) ออกก่อนคำนวณ
 
 ### 6.5 การใช้ฐานข้อมูลจากโครงการอื่น
 งานประยุกต์ติดตั้งแพ็กเกจ `wxdb` (เฉพาะส่วนอ่านข้อมูลและฟังก์ชันตรวจสอบความถูกต้อง) โดยระบุเวอร์ชันด้วย tag เพื่อให้ทำซ้ำผลได้
