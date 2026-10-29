@@ -185,6 +185,18 @@ def _scores(c):
             "csi": round(100 * h / (h + m + fa), 1) if h + m + fa else None}
 
 
+def _equal_weight(df):
+    """ทั่วประเทศ: ให้แต่ละจังหวัด/ตำแหน่ง (loc) มีน้ำหนักเท่ากันในแต่ละช่วงเวลา
+    (กรุงเทพฯ มีเครื่องวัดฝนหนาแน่นและพยากรณ์ทุกชั่วโมง จึงมีจำนวนครั้งมากกว่าจังหวัดอื่นหลายพันเท่า)
+    น้ำหนัก = ค่าเฉลี่ยของจำนวนครั้งต่อ loc ÷ จำนวนครั้งของ loc นั้น (นับจากค่ากลางทุกโมเดล) → ผลรวมคงขนาดเดิม"""
+    base = df[(df["thr"] == "rain") & (df["model"] == MEDIAN)].groupby(["window", "loc"])["n"].sum()
+    w = (base.groupby("window").transform("mean") / base).rename("w")
+    out = df.join(w, on=["window", "loc"])
+    out["w"] = out["w"].fillna(0.0)
+    out[COUNTS + ["n"]] = out[COUNTS + ["n"]].mul(out["w"], axis=0)
+    return out.drop(columns="w")
+
+
 def summary(archive, days=30):
     """สรุปสำหรับหน้าเว็บ: ต่อ (ตำแหน่ง | ทุกตำแหน่ง) × ช่วง → ตารางโมเดล + ฝนหนัก + ช่วงของวัน + ความน่าเชื่อถือของ %"""
     base = Path(archive) / "verification" / "usr"
@@ -200,26 +212,32 @@ def summary(archive, days=30):
     out = {"days": days, "since": str(df["date"].min()) if len(df) else None,
            "windows": [w for w, _ in WINDOWS], "median": MEDIAN, "ens": ENS, "heavy_mm": HEAVY,
            "scopes": {}}
-    for scope, g in [("ทุกตำแหน่ง", df)] + list(df.groupby("loc")):
+    # "ทุกตำแหน่ง" = ทั่วประเทศ ถ่วงให้ทุกจังหวัดเท่ากัน (คะแนนจากค่าถ่วง จำนวนครั้งที่แสดงเป็นจำนวนจริง)
+    for scope, g, real in [("ทุกตำแหน่ง", _equal_weight(df), df)] + [(k, x, x) for k, x in df.groupby("loc")]:
         sc = {}
         for w in out["windows"]:
-            gw = g[g["window"] == w]
+            gw, rw = g[g["window"] == w], real[real["window"] == w]
             if gw.empty:
                 continue
             rain = gw[gw["thr"] == "rain"].groupby("model")[COUNTS + ["n"]].sum()
             heavy = gw[gw["thr"] == "heavy"].groupby("model")[COUNTS + ["n"]].sum()
+            rain_n = rw[rw["thr"] == "rain"].groupby("model")[COUNTS + ["n"]].sum()
+            heavy_n = rw[rw["thr"] == "heavy"].groupby("model")[COUNTS + ["n"]].sum()
+            cnt = lambda s: {k: v for k, v in _scores(s).items() if k in ("n", "n_rain", "n_said")}  # noqa: E731
             rows = []
             for m, c in rain.iterrows():
-                r = {"model": m, **_scores(c), "mae": round(c["abs_err"] / c["n"], 1) if c["n"] and m != ENS else None}
+                r = {"model": m, **_scores(c), **cnt(rain_n.loc[m]),
+                     "mae": round(c["abs_err"] / c["n"], 1) if c["n"] and m != ENS else None}
                 if m in heavy.index:
                     hs = _scores(heavy.loc[m])
-                    r.update(heavy_pod10=hs["pod10"], heavy_sr10=hs["sr10"], heavy_n=hs["n_rain"])
+                    r.update(heavy_pod10=hs["pod10"], heavy_sr10=hs["sr10"], heavy_n=_scores(heavy_n.loc[m])["n_rain"])
                 rows.append(r)
             rows.sort(key=lambda r: -(r["csi"] or 0))
             tod = {}
             gm = gw[(gw["thr"] == "rain") & (gw["model"] == MEDIAN) & (gw["tod"] != "all")]
+            gr = rw[(rw["thr"] == "rain") & (rw["model"] == MEDIAN) & (rw["tod"] != "all")].groupby("tod")[COUNTS + ["n"]].sum()
             for t, c in gm.groupby("tod")[COUNTS + ["n"]].sum().iterrows():
-                tod[t] = _scores(c)
+                tod[t] = {**_scores(c), **cnt(gr.loc[t])}
             sc[w] = {"rows": rows, "tod": tod}
         rg = rel if scope == "ทุกตำแหน่ง" else rel[rel["loc"] == scope]
         rb = rg.groupby("bin")[["n", "n_rain"]].sum()

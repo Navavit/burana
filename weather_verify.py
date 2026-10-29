@@ -190,7 +190,7 @@ def verification_points(archive, locations, tmd3h, thaiwater, cfg=None):
 
 
 def national_points(tmd3h):
-    """สถานีอุตุนิยมวิทยาทุกแห่งเป็นจุดตรวจ (for = จังหวัด) · ดึงพยากรณ์แบบเบาทุก NATIONAL_EVERY_H ชม. (collect_national)"""
+    """สถานีอุตุนิยมวิทยาทุกแห่งเป็นจุดตรวจ (for = จังหวัด) · ดึงพยากรณ์แบบเบาทุก 3 ชม. (collect_national)"""
     import weather_national
     prov = weather_national.provinces()
     names = set(prov.province_th)
@@ -209,16 +209,19 @@ def national_points(tmd3h):
     return out
 
 
-NATIONAL_EVERY_H = 6
+# รอบดึงพยากรณ์ทั่วประเทศ: ชั่วโมงเริ่มรอบวัด 3 ชม. ของกรมอุตุฯ (01, 04, 07, … น.) ซึ่งมุมผู้ใช้ใช้เป็นจุดเริ่มช่วง +3/+6/…
+NATIONAL_HOURS = {1, 4, 7, 10, 13, 16, 19, 22}
 
 
 def collect_national(points, archive, cfg=None, batch=10):
-    """พยากรณ์แบบเบา (อุณหภูมิและฝน ทุกแบบจำลอง) ที่จุดตรวจทั่วประเทศ ทุก NATIONAL_EVERY_H ชม.
-    ≈ 128 จุด × ⌈20 ตัวแปร / 10⌉ ≈ 260 คำขอ/รอบ ≈ 1,000 คำขอ/วัน · เขียนรูปแบบเดียวกับ runs/ ของจุดตรวจอื่น"""
+    """พยากรณ์แบบเบา (อุณหภูมิและฝน ทุกแบบจำลอง) ที่จุดตรวจทั่วประเทศ ทุก 3 ชม. ที่ชั่วโมงใน NATIONAL_HOURS
+    ≈ 128 จุด × ⌈20 ตัวแปร / 10⌉ ≈ 260 คำขอ/รอบ ≈ 2,100 คำขอ/วัน (ภายในโควตาฟรี) · เขียนรูปแบบเดียวกับ runs/ ของจุดตรวจอื่น"""
     import time as _time
     cfg = cfg or core.CFG
     stamp = Path(archive) / "verification" / "national_points_last.txt"
-    if stamp.exists() and _time.time() - float(stamp.read_text() or 0) < NATIONAL_EVERY_H * 3600 - 600:
+    if pd.Timestamp.now(tz="Asia/Bangkok").hour not in NATIONAL_HOURS:
+        return 0
+    if stamp.exists() and _time.time() - float(stamp.read_text() or 0) < 2 * 3600:     # รอบละครั้ง
         return 0
     pts = [p for p in points if p.get("national")]
     models = core.active_models(cfg)

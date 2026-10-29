@@ -775,7 +775,9 @@ function userScope() {
   const U = state.verify?.user_mode;
   if (!U) return null;
   // ตำแหน่งที่มีจุดตรวจของตัวเองใช้ชื่อตำแหน่ง มิฉะนั้นใช้จังหวัดของสถานีอุตุนิยมวิทยาที่ใกล้ที่สุด (จุดตรวจทั่วประเทศ)
-  const name = state.loc?.name && U.scopes[state.loc.name] ? state.loc.name : state.nearProv && U.scopes[state.nearProv] ? state.nearProv : null;
+  // ข้อมูลของจังหวัดยังน้อย (< 30 ครั้งที่ +3 ชม.) ใช้ผลทั่วประเทศแทน เพื่อไม่ให้แสดงตัวเลขที่แกว่งมาก
+  const enough = (k) => (((U.scopes[k] || {})["+3"] || {}).rows || []).some((r) => r.model === U.median && r.n >= 30);
+  const name = state.loc?.name && enough(state.loc.name) ? state.loc.name : state.nearProv && enough(state.nearProv) ? state.nearProv : null;
   return { name: name || "ทุกตำแหน่ง", data: (name && U.scopes[name]) || U.scopes["ทุกตำแหน่ง"] || {} };
 }
 function medianRow(w) {
@@ -817,7 +819,7 @@ function renderUserMode() {
   const med = rows.find((r) => r.model === U.median);
   const models = rows.filter((r) => r.model !== U.median && r.model !== U.ens && r.n_rain >= 3);
   const best = [...models].sort((a, b) => (b.csi ?? 0) - (a.csi ?? 0))[0];
-  const scopeTxt = sc.name === "ทุกตำแหน่ง" ? T("ทุกจุดตรวจ", "all check points")
+  const scopeTxt = sc.name === "ทุกตำแหน่ง" ? T("ทั่วประเทศ ทุกจังหวัดมีน้ำหนักเท่ากัน", "nationwide, every province weighted equally")
     : state.loc?.name === sc.name ? T(`จุดตรวจของ${sc.name}`, `check points of ${tx(sc.name)}`)
       : T(`จุดตรวจในจังหวัด${sc.name} (สถานีที่ใกล้ที่สุด)`, `check points in ${tx(sc.name)} (nearest station)`);
   $("u-summary").replaceChildren(el("p", {}, ...(med ? [
@@ -969,7 +971,7 @@ function renderVerify() {
     nat.length ? el("details", { class: "nat-points" },
       el("summary", {}, el("b", {}, T(`จุดตรวจทั่วประเทศ: สถานีอุตุนิยมวิทยา ${nat.length} แห่ง ใน ${Object.keys(byProv).length} จังหวัด`,
         `Nationwide check points: ${nat.length} weather stations in ${Object.keys(byProv).length} provinces`)),
-        T(" (พยากรณ์อุณหภูมิและฝนทุก 6 ชม.)", " (temperature and rain forecasts every 6 h)")),
+        T(" (พยากรณ์อุณหภูมิและฝนทุก 3 ชม.)", " (temperature and rain forecasts every 3 h)")),
       el("ul", { class: "cols" }, Object.keys(byProv).sort((a, b) => tx(a).localeCompare(tx(b), LANG)).map((pv) =>
         el("li", {}, el("b", {}, tx(pv)), ": ", byProv[pv].map(tx).join(", "))))) : null,
     el("p", { class: "note" }, el("a", { href: "data.html#details" }, T("รายละเอียดของข้อมูลทั้งหมด →", "Details of all data →")))].flat() :   // flat: รายการจุดตรวจของตำแหน่งหลักเป็น array ซ้อน

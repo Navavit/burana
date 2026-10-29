@@ -28,7 +28,7 @@ const TX = {
   "ต่ำ": "Low", "ปานกลาง": "Moderate", "สูง": "High", "สูงมาก": "Very high",
   "ดีมาก": "Very good", "ดี": "Good", "เริ่มมีผลต่อสุขภาพ": "Unhealthy for sensitive groups", "มีผลต่อสุขภาพ": "Unhealthy",
   // แหล่งพยากรณ์ในผลการตรวจสอบ
-  "ค่ากลางทุกโมเดล": "All-model median", "โอกาสฝน (ensemble)": "Rain chance (ensemble)", "ทุกตำแหน่ง": "All locations",
+  "ค่ากลางทุกโมเดล": "All-model median", "โอกาสฝน (ensemble)": "Rain chance (ensemble)", "ทุกตำแหน่ง": "Nationwide",
   // ภาคของกรมอุตุนิยมวิทยา
   "ภาคกลาง": "Central", "ภาคตะวันออก": "East", "ภาคตะวันออกเฉียงเหนือ": "Northeast", "ภาคเหนือ": "North",
   "ภาคใต้ฝั่งตะวันตก": "South (west coast)", "ภาคใต้ฝั่งตะวันออก": "South (east coast)",
