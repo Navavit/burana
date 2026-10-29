@@ -415,3 +415,10 @@ body.heat-mode .steps, body.heat-mode .timebase { display: none; }
   .tagline { font-size: 12.5px; }
   .brand-mark { width: 36px; height: 36px; }
 }
+
+/* ⓘ ต่างกันอย่างไร: พับไว้ข้างปุ่มสลับมุมมอง กางออกเต็มแถว */
+.v-diff { font-size: 13px; color: var(--ink-2); align-self: center; }
+.v-diff summary { cursor: pointer; color: var(--series-1); list-style: none; padding: 4px 2px; }
+.v-diff summary::-webkit-details-marker { display: none; }
+.v-diff[open] { flex-basis: 100%; }
+.v-diff p { margin: 4px 0 0; line-height: 1.6; }
