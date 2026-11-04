@@ -15,6 +15,7 @@ import math
 import time
 
 import pandas as pd
+import requests
 
 import weather_core as core
 
@@ -44,17 +45,19 @@ def cost(n_sites, days):
 def _request(model, lat, lon, start, end, tries=4):
     hv = [f"{v}_previous_day{d}" for v in VARS for d in LEADS]
     for i in range(tries):
-        r = core.SESSION.get(core.PREVIOUS_RUNS_URL, params={
-            "latitude": ",".join(f"{x:.4f}" for x in lat), "longitude": ",".join(f"{x:.4f}" for x in lon),
-            "hourly": ",".join(hv), "models": model, "start_date": start, "end_date": end, "timezone": "GMT"}, timeout=180)
-        if r.status_code == 429 or r.status_code >= 500:
-            if i == tries - 1:
-                r.raise_for_status()
-            time.sleep(60 * (i + 1))                    # เกินโควตารายนาที/ชั่วโมง: รอแล้วลองใหม่
-            continue
-        r.raise_for_status()
-        js = r.json()
-        return js if isinstance(js, list) else [js]
+        try:
+            r = core.SESSION.get(core.PREVIOUS_RUNS_URL, params={
+                "latitude": ",".join(f"{x:.4f}" for x in lat), "longitude": ",".join(f"{x:.4f}" for x in lon),
+                "hourly": ",".join(hv), "models": model, "start_date": start, "end_date": end, "timezone": "GMT"}, timeout=180)
+            r.raise_for_status()
+            js = r.json()                               # การเชื่อมต่อถูกตัดกลางทาง: รหัส 200 แต่ JSON ขาดท้าย → ValueError
+            return js if isinstance(js, list) else [js]
+        except (ValueError, requests.ConnectionError, requests.Timeout, requests.HTTPError, requests.exceptions.ChunkedEncodingError) as e:
+            code = e.response.status_code if isinstance(e, requests.HTTPError) else None
+            if i == tries - 1 or (code and code < 500 and code != 429):    # 4xx อื่น = คำขอผิด ลองใหม่ไม่ช่วย
+                raise
+            print(f"⚠️ Previous Runs {model} {start}: {type(e).__name__} ลองใหม่ครั้งที่ {i + 2}/{tries}", flush=True)
+            time.sleep(60 * (i + 1))
 
 
 def available(model, month):

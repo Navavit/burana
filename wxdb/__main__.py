@@ -297,19 +297,28 @@ def cmd_prevruns(a):
     with tempfile.TemporaryDirectory() as d:
         site = _load_dim("site", d)
         st = site[site.site_id.str.startswith("tmd:") & site.lat.notna()].drop_duplicates("site_id").reset_index(drop=True)
-        used, done = 0, 0
+        used, done, failed = 0, 0, 0
         for model, month in jobs:
             days = pd.Period(month, "M").days_in_month
             need = prevruns.cost(len(st), days) + 1
             if used + need > a.budget:
                 break
             used += 1
-            if not prevruns.available(model, month):
-                man.setdefault("prevrun_unavailable", []).append(f"{model}_{month}")
-                store.save_manifest(man)
-                print(f"{model} {month}: ไม่มีข้อมูลใน Previous Runs")
+            # งานที่ค้างจะกลับมาในรอบถัดไปเอง จึงไม่ให้งานเดียวทำให้ขั้นตอนหลังจากนี้ (รวมไฟล์ ซ่อม manifest) ไม่ได้ทำ
+            try:
+                if not prevruns.available(model, month):
+                    man.setdefault("prevrun_unavailable", []).append(f"{model}_{month}")
+                    store.save_manifest(man)
+                    print(f"{model} {month}: ไม่มีข้อมูลใน Previous Runs")
+                    continue
+                df = prevruns.model_month(model, month, st)
+            except Exception as e:                      # noqa: BLE001
+                failed += 1
+                print(f"⚠️ {model} {month}: {type(e).__name__}: {e} · ข้ามไปรอบถัดไป", flush=True)
+                if failed >= 3:
+                    print("⚠️ Previous Runs: ล้มเหลว 3 งาน หยุดรอบนี้", flush=True)
+                    break
                 continue
-            df = prevruns.model_month(model, month, st)
             used += need - 1
             if not len(df):
                 continue
@@ -320,7 +329,7 @@ def cmd_prevruns(a):
             store.save_manifest(man)
             done += 1
             print(f"{model} {month}: {len(df):,} แถว · {df.site_id.nunique()} สถานี · {path.stat().st_size / 1e6:.1f} MB", flush=True)
-        print(f"Previous Runs: เสร็จ {done} งาน · ใช้โควตา ~{used:,} หน่วย · ค้าง {len(prevruns.todo(man)):,} งาน")
+        print(f"Previous Runs: เสร็จ {done} งาน · ล้มเหลว {failed} งาน · ใช้โควตา ~{used:,} หน่วย · ค้าง {len(prevruns.todo(man)):,} งาน")
 
 
 def cmd_qc(a):
