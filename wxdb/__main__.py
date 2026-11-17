@@ -354,7 +354,11 @@ def cmd_sensor(a):
         parts, sites = [], []
         for sid, s in sensor.SENSORS.items():
             start = pd.Timestamp(a.start or s["since"] if a.start or a.all else now.normalize() - pd.Timedelta(days=a.days))
-            df = sensor.fetch(sid, start, now)
+            try:
+                df = sensor.fetch(sid, start, now)
+            except Exception as e:                      # noqa: BLE001  เซิร์ฟเวอร์ของเซนเซอร์อยู่นอกระบบ ล่มได้ (เช่น 503) · รอบถัดไปดึงย้อนหลังให้เอง
+                print(f"⚠️ {sid}: {type(e).__name__}: {e} · ข้ามรอบนี้", flush=True)
+                continue
             if df is None or not len(df):
                 continue
             print(f"{sid}: {len(df):,} ค่า · {df.time.min():%Y-%m-%d %H:%M} – {df.time.max():%Y-%m-%d %H:%M} UTC")
@@ -427,7 +431,7 @@ def main(argv=None):
     q.add_argument("--dry-run", action="store_true")
     q.set_defaults(fn=cmd_qc)
     sn = s.add_parser("sensor")
-    sn.add_argument("--days", type=int, default=3, help="ดึงย้อนหลังกี่วัน (ค่าเริ่มต้น 3)")
+    sn.add_argument("--days", type=int, default=7, help="ดึงย้อนหลังกี่วัน (ค่าเริ่มต้น 7 เผื่อเซิร์ฟเวอร์ของเซนเซอร์ล่มหลายวัน)")
     sn.add_argument("--from", dest="start")
     sn.add_argument("--all", action="store_true", help="ดึงตั้งแต่วันแรกของเซนเซอร์")
     sn.set_defaults(fn=cmd_sensor)

@@ -62,7 +62,7 @@ jobs:
         run: python -m wxdb catalog
 
       - name: พยากรณ์กริด
-        if: env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'grid'
+        if: ${{ !cancelled() && (env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'grid') }}
         run: python -m wxdb grid ${{ env.WXDB_TASK == 'grid' && inputs.args || '' }}
 
       # พยากรณ์ ณ สถานีอุตุนิยมวิทยาทุกแห่งเก็บโดย collect.yml ทุก 6 ชม. (จุดตรวจทั่วประเทศ) แล้วเข้าฐานข้อมูลผ่าน etl
@@ -72,35 +72,35 @@ jobs:
         run: python -m wxdb points
 
       - name: เตรียม branch data
-        if: env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'etl'
+        if: ${{ !cancelled() && (env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'etl') }}
         run: |
           git fetch --depth=1 origin data
           git worktree add --detach archive FETCH_HEAD
 
       - name: แปลงคลังรายชั่วโมงเข้าฐานข้อมูล
-        if: env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'etl'
+        if: ${{ !cancelled() && (env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'etl') }}
         run: python -m wxdb etl --archive archive ${{ env.WXDB_TASK == 'etl' && inputs.args || '' }}
 
       - name: เซนเซอร์ของผู้ใช้ (ThingsBoard)
-        if: env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'sensor'
+        if: ${{ !cancelled() && (env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'sensor') }}
         env:
           PFAL_PUBLIC_ID: ${{ secrets.PFAL_PUBLIC_ID }}      # ว่างได้ ถ้ายังไม่ตั้ง จะข้าม
         run: python -m wxdb sensor ${{ env.WXDB_TASK == 'sensor' && inputs.args || '' }}
 
       - name: ควบคุมคุณภาพฝนรายวันของโทรมาตร
-        if: env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'qc'
+        if: ${{ !cancelled() && (env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'qc') }}
         run: python -m wxdb qc ${{ env.WXDB_TASK == 'qc' && inputs.args || '' }}
 
       - name: พยากรณ์ย้อนหลัง (Previous Runs)
-        if: env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'prevruns'
+        if: ${{ !cancelled() && (env.WXDB_TASK == 'daily' || env.WXDB_TASK == 'prevruns') }}
         run: python -m wxdb prevruns --budget 2000 ${{ env.WXDB_TASK == 'prevruns' && inputs.args || '' }}
 
       - name: รวมไฟล์รายวันของเดือนปัจจุบัน (ตัดแถวซ้ำข้ามไฟล์)
-        if: env.WXDB_TASK == 'daily'
+        if: ${{ !cancelled() && (env.WXDB_TASK == 'daily') }}
         run: python -m wxdb pack --current
 
       - name: ซ่อม manifest (ไฟล์ที่หลุดจากการบันทึกพร้อมกัน)
-        if: env.WXDB_TASK == 'daily'
+        if: ${{ !cancelled() && (env.WXDB_TASK == 'daily') }}
         run: python -m wxdb reconcile
 
       - name: สรุปสถานะ
